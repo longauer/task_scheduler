@@ -15,7 +15,12 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/longauer/task_scheduler",
     packages=find_packages(),
-    install_requires= read_requirements(),
+    install_requires= [
+        "argparse",
+        "datetime",
+        "colorama",
+        "urwid"
+],
     entry_points={
         "console_scripts": [
             "task-scheduler=task_scheduler.main:main",
