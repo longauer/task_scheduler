@@ -210,20 +210,3 @@ colorama
 urwid
 
 pytest (for testing)
-
-
-## Contributing
-
-Fork the repository
-
-Create your feature branch (git checkout -b feature/awesome-feature)
-
-Commit your changes (git commit -am 'Add awesome feature')
-
-Push to the branch (git push origin feature/awesome-feature)
-
-Open a Pull Request
-
-
-ADD A LICENCE (MIT) probably
-ADD SCREENSHOTS SHOWING THE VISUAL INTERFACE OF THE APP
