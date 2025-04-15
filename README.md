@@ -9,10 +9,10 @@ A CLI-based task scheduling application with interactive mode and visualization 
 - Create tasks with deadlines, durations, and descriptions
 - Hierarchical task management with subtasks
 - Multiple visualization modes:
-  antt chart view
-  alendar view
-  rogress bars
-  eadline warnings
+- Gantt chart view
+- Calendar view
+- progress bars
+- deadline warnings
 - Automatic task scheduling with deadline awareness
 - Interactive terminal UI
 - Docker container support
@@ -104,6 +104,55 @@ Real-time progress updates
 
 Color-coded deadlines
 
+
+
+
+
+### Controls:
+#### Navigation
+
+↑/↓ - Navigate items in focused panel
+Tab - Switch between task/time slot panels
+clicking on a task - selects the task
+
+#### Actions
+
+Enter - Select task/time slot
+a - Add new task/time slot (depending on focused panel)
+m - Enter move mode (tasks) / Modify slot (time slots)
+
+#### General
+q - Quit application
+
+#### Key Features:
+
+Dual-Pane Interface
+
+##### 📋 Left Panel - Task Hierarchy:
+
+- Visual tree structure with nested subtasks
+
+##### ⏱️ Right Panel - Time Slot Management:
+
+- Chronological schedule view
+- Duration calculations with time slot validation
+- Enhanced Editing
+- In-line time slot modification with instant validation
+- Drag-and-drop reorganization (tasks)
+- Keyboard-based time slot adjustments
+
+#### New Features
+
+- Split-screen workflow management
+- Cross-panel task/time slot associations
+- Real-time schedule validation
+- Visual focus indicators (highlighted panel borders)
+- Smart time slot sorting and gap detection
+
+#### Feedback & Safety
+
+- Instant save confirmation toasts
+- Undo/redo stack for critical operations
 
 
 ## Data Format
@@ -210,3 +259,16 @@ colorama
 urwid
 
 pytest (for testing)
+
+
+## Contributing
+
+Fork the repository
+
+Create your feature branch (git checkout -b feature/awesome-feature)
+
+Commit your changes (git commit -am 'Add awesome feature')
+
+Push to the branch (git push origin feature/awesome-feature)
+
+Open a Pull Request
