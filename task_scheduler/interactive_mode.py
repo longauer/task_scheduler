@@ -340,15 +340,22 @@ class InteractiveApp:
         self.footer.set_text("Move operation cancelled")
 
     def view_task_details(self, button, task: Task):
-        details = f"""
-        Name: {task.name}
-        Description: {task.description}
-        Duration: {task.duration} minutes
-        Deadline: {task.deadline.isoformat() if task.deadline else 'None'}
-        Completion: {task.completion}%
-        Parent Task: {task.parent.name if task.parent else 'None'}
-        Subtasks: {len(task.subtasks)}
-                """.strip()
+
+        description = "\n".join(line.strip() for line in str(task.description).splitlines())
+
+        details = (
+            f"Name: {task.name.strip()}\n\n"
+            f"Description: {description}\n"
+            f"Duration: {task.duration} minutes\n\n"
+            f"Deadline: {task.deadline.isoformat() if task.deadline else 'None'}\n\n"
+            f"Completion: {task.completion}%\n\n"
+            f"Parent Task: {task.parent.name.strip() if task.parent else 'None'}\n\n"
+            f"Subtasks: {len(task.subtasks)}"
+        )
+
+        # Create left-aligned text widget
+        text = urwid.Text(("body", details))
+
         text = urwid.Text(details)
         back_button = urwid.Button("← Back", on_press=self.back_to_main)
         edit_button = urwid.Button("✏️ Edit Task", on_press=self.edit_task, user_data=task)
@@ -356,7 +363,8 @@ class InteractiveApp:
         completed_button = urwid.Button("✅ Completed", on_press=self.completed_task, user_data=task)
 
         pile = urwid.Pile([
-            text, urwid.Divider(),
+            urwid.AttrMap(text, "body"),
+            urwid.Divider(),
             edit_button,
             delete_button,
             completed_button,
