@@ -338,14 +338,14 @@ class CommandProcessor:
             CommandProcessor.update_task(scheduler_name, task_name, description=task.description, duration=task.duration, completion=100)
 
     @staticmethod
-    def schedule_tasks(scheduler_name):
+    def schedule_tasks(scheduler_name, show_unscheduled=False):
         """ Assigning the tasks to the time slots """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
 
         ## schedule tasks
-        scheduler.schedule_tasks()
+        scheduler.schedule_tasks(show_unscheduled=show_unscheduled)
 
         ## saving the scheduler
         scheduler.save_schedule()
@@ -454,7 +454,7 @@ COMMANDS = {
     "delete_task": lambda args: CommandProcessor.delete_task(args.scheduler_name, args.name),
     "update_task": lambda args: CommandProcessor.update_task(args.scheduler_name, args.task_name, args.name, args.description, args.duration, args.deadline, args.completion),
     "divide_task": lambda args: CommandProcessor.divide_task(args.scheduler_name, args.original_task_name, args.name, args.description, args.duration),
-    "schedule_tasks": lambda args: CommandProcessor.schedule_tasks(args.scheduler_name),
+    "schedule_tasks": lambda args: CommandProcessor.schedule_tasks(args.scheduler_name, show_unscheduled=True),
     "view_next": lambda args: CommandProcessor.view_next_task(args.scheduler_name),
     "view_schedule": lambda args: CommandProcessor.view_schedule(args.scheduler_name),
     "view_calendar": lambda args: CommandProcessor.view_calendar(args.scheduler_name, args.year, args.month),

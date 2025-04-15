@@ -39,6 +39,7 @@ class TaskScheduler:
     def add_time_slot(self, time_slot): ## assuming passing initialized TimeSlot objects
 
         bisect.insort(self.time_slots, time_slot)
+
     def delete_time_slot(self, time_slot):
 
         self.time_slots.remove(time_slot)
@@ -96,7 +97,7 @@ class TaskScheduler:
     ## basic algorithm for scheduling tasks
     ## - greedy approach: polling tasks in order of their deadlines and fitting their corresponding subtasks in the available time_slots
 
-    def schedule_tasks(self):
+    def schedule_tasks(self, show_unscheduled=False):
         ## always scheduling as far ahead as possible (until we run out of either time_slots or tasks)
         ## announcing impossible to schedule tasks
         ## the order subtasks must be preserved in the schedule
@@ -120,7 +121,7 @@ class TaskScheduler:
         lowest_level_tasks = list(filter(lambda task: task.completion < 100, lowest_level_tasks))
 
         ## filter out the tasks with unset duration
-        lowest_level_tasks = list(filter(lambda task: task.duration != None, lowest_level_tasks))
+        lowest_level_tasks = list(filter(lambda task: task.duration != 0, lowest_level_tasks))
 
 
 
@@ -157,7 +158,7 @@ class TaskScheduler:
 
                         impossible_to_schedule.append(next(iterator, None).name)
 
-        if len(impossible_to_schedule) > 0:
+        if len(impossible_to_schedule) > 0 and show_unscheduled:
             print("impossible_to_schedule:", ", ".join(impossible_to_schedule), file=sys.stderr)
 
     def get_next_task(self):

@@ -203,32 +203,12 @@ class InteractiveApp:
 
     def _remove_task(self, task_to_remove):
         """Remove task from current position in hierarchy"""
-        # Check top-level tasks first
-        # if task_to_remove in self.scheduler.tasks:
-        #     self.scheduler.delete_task(task_to_remove.name)
-        #     return True
-        #
-        # # Search through all subtasks
-        # for task in self.scheduler.tasks:
-        #     if self._remove_from_subtasks(task, task_to_remove):
-        #         return True
 
         task = self.scheduler.get_task_by_name(task_to_remove.name)
         if task:
             self.scheduler.delete_task(task.name)
             return True
 
-        return False
-
-    def _remove_from_subtasks(self, parent_task, task_to_remove):
-        """Recursively remove from subtasks"""
-        if task_to_remove in parent_task.subtasks:
-            parent_task.subtasks.remove(task_to_remove)
-            return True
-
-        for subtask in parent_task.subtasks:
-            if self._remove_from_subtasks(subtask, task_to_remove):
-                return True
         return False
 
     def _is_child_of(self, potential_child, potential_parent):
@@ -252,7 +232,6 @@ class InteractiveApp:
             self.cancel_move()
 
     def on_task_click(self, button, task: Task):
-        print("Entering on_task_click")
         if self.move_mode_active:
             if self.selected_task_to_move is None:
                 # First selection - choose task to move
@@ -325,7 +304,7 @@ Subtasks: {len(task.subtasks)}
 
         task.name = new_name.strip()
         task.description = new_desc.strip()
-        task.duration = int(new_duration.strip()) if new_duration.strip().isdigit() else None
+        task.duration = int(new_duration.strip()) if new_duration.strip().isdigit() else 0
         try:
             dt = datetime.datetime.fromisoformat(new_deadline.strip())
             task.deadline = dt
@@ -392,7 +371,7 @@ Subtasks: {len(task.subtasks)}
             task = Task(
                 name=name.strip(),
                 description=description.strip(),
-                duration=int(duration_str.strip()) if (duration_str.strip()).isdigit() else None,
+                duration=int(duration_str.strip()) if (duration_str.strip()).isdigit() else 0,
                 deadline=deadline_str
             )
             self.scheduler.add_task(task)

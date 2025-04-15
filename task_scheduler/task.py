@@ -2,7 +2,7 @@ import datetime as datetime
 from typing import Optional
 
 class Task:
-    def __init__(self, name, description = None, deadline: datetime = None, duration: int = None, parent: Optional["Task"] = None):
+    def __init__(self, name, description = None, deadline: datetime = None, duration: int = 0, parent: Optional["Task"] = None):
 
         self.name = name
         self.description = description
@@ -74,6 +74,9 @@ class Task:
             if task.name == task_name:
 
                 del self.subtasks[ind]
+
+            else:
+                task.delete(task_name)
 
     def __repr__(self):
         return f"(name: {self.name}, deadline: {self.deadline}, duration: {self.duration}, completion: {self.completion})"
