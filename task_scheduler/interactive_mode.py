@@ -2,6 +2,7 @@ import urwid
 from task_scheduler.scheduler import TaskScheduler
 from task_scheduler.utils import vim_edit
 from task_scheduler.task import Task
+from task_scheduler.time_slot import TimeSlot
 import datetime
 import sys
 
@@ -12,9 +13,14 @@ class InteractiveApp:
         self.scheduler = self.load_scheduler(scheduler_name)
         self.main_loop = None
         self.listbox = None
+        self.time_slot_listbox = None
         self.body_walker = None
+        self.time_slot_walker = None
         self.selected_task_to_move = None
+        self.selected_time_slot = None
         self.move_mode_active = False
+        self.current_focus = 'tasks'  # 'tasks' or 'time_slots'
+        self.current_dialog = None
 
         # Define color palette
         self.palette = [
@@ -30,7 +36,11 @@ class InteractiveApp:
 
         # Initialize UI components
         self.header = urwid.Text(f"📅 Interactive Task Manager - {self.scheduler_name}", align='center')
-        self.footer = urwid.Text("↑↓ navigate | Enter select/move | m toggle move | a add | q quit", align='center')
+        self.footer = urwid.Text(
+            "↑↓ navigate | Tab switch panels | Enter select/move | "
+            "a add | m toggle move | q quit",
+            align='center'
+        )
 
         # Create initial empty listbox
         self.body_walker = urwid.SimpleFocusListWalker([])
@@ -41,7 +51,24 @@ class InteractiveApp:
             footer=urwid.AttrMap(self.footer, 'footer')
         )
 
-        # Initial refresh
+        # Initialize time slot components
+        self.time_slot_walker = urwid.SimpleFocusListWalker([])
+        self.time_slot_listbox = urwid.ListBox(self.time_slot_walker)
+
+        # Create split view columns
+        self.columns = urwid.Columns([
+            ('weight', 1, urwid.LineBox(self.listbox, title="Tasks")),
+            ('weight', 1, urwid.LineBox(self.time_slot_listbox, title="Time Slots"))
+        ])
+
+        # Update frame body
+        self.frame = urwid.Frame(
+            header=urwid.AttrMap(self.header, 'header'),
+            body=self.columns,
+            footer=urwid.AttrMap(self.footer, 'footer')
+        )
+
+        # Initial refresh of both panels
         self.refresh_view()
 
     def load_scheduler(self, name):
@@ -69,6 +96,12 @@ class InteractiveApp:
             sys.exit(1)
 
     def refresh_view(self, maintain_focus=False):
+        """Refresh both task and time slot views"""
+        self._refresh_tasks(maintain_focus)
+        self._refresh_time_slots()
+        self.update_focus_indicator()
+
+    def _refresh_tasks(self, maintain_focus=False):
         """Refresh the view while maintaining focus position"""
         try:
             # Store current focus
@@ -120,7 +153,7 @@ class InteractiveApp:
         """Build task widgets recursively"""
         for task in tasks:
             prefix = "👉" if (
-                        self.move_mode_active and task == self.selected_task_to_move) else "📌" if task == self.selected_task_to_move else "•"
+                    self.move_mode_active and task == self.selected_task_to_move) else "📌" if task == self.selected_task_to_move else "•"
             attr = 'selected_task' if task == self.selected_task_to_move else None
 
             label = f"{' ' * (depth * 4)}{prefix} {task.name}"
@@ -182,8 +215,6 @@ class InteractiveApp:
         self.scheduler.schedule_tasks()
         self.scheduler.save_schedule()
 
-
-
         # self.scheduler.schedule_tasks()
         # self.scheduler.save_schedule()
         return True
@@ -220,16 +251,55 @@ class InteractiveApp:
             current = current.parent
         return False
 
+    def update_focus_indicator(self):
+        """Update focus highlight using attribute maps"""
+        # Create fresh attribute maps for both panels
+        task_attr = 'reversed' if self.current_focus == 'tasks' else None
+        schedule_attr = 'reversed' if self.current_focus == 'time_slots' else None
+
+        # Rebuild columns with updated attributes
+        self.columns.contents = [
+            (
+                urwid.AttrMap(
+                    urwid.LineBox(self.listbox, title="Tasks"),
+                    task_attr
+                ),
+                self.columns.contents[0][1]
+            ),
+            (
+                urwid.AttrMap(
+                    urwid.LineBox(self.time_slot_listbox, title="Time Slots"),
+                    schedule_attr
+                ),
+                self.columns.contents[1][1]
+            )
+        ]
+
+        # Set focus to the correct column
+        self.columns.focus_position = 0 if self.current_focus == 'tasks' else 1
+
     def handle_input(self, key):
         if key in ('q', 'Q'):
             sys.exit(0)
-            ## raise urwid.ExitMainLoop()
+        elif key == 'tab':
+            self.current_focus = 'time_slots' if self.current_focus == 'tasks' else 'tasks'
+            self.update_focus_indicator()
+            return
         elif key == 'a':
             self.add_new_task(None)
+            return
         elif key == 'm':
             self.toggle_move_mode()
+            return
         elif key == 'esc' and self.move_mode_active:
             self.cancel_move()
+            return
+
+            # Delegate keypress to currently focused column
+        if self.current_focus == 'tasks':
+            self.listbox.keypress(self.main_loop.screen_size, key)
+        else:
+            self.time_slot_listbox.keypress(self.main_loop.screen_size, key)
 
     def on_task_click(self, button, task: Task):
         if self.move_mode_active:
@@ -265,17 +335,16 @@ class InteractiveApp:
         self.refresh_view()
         self.footer.set_text("Move operation cancelled")
 
-
     def view_task_details(self, button, task: Task):
         details = f"""
-Name: {task.name}
-Description: {task.description}
-Duration: {task.duration} minutes
-Deadline: {task.deadline.isoformat() if task.deadline else 'None'}
-Completion: {task.completion}%
-Parent Task: {task.parent.name if task.parent else 'None'}
-Subtasks: {len(task.subtasks)}
-        """.strip()
+        Name: {task.name}
+        Description: {task.description}
+        Duration: {task.duration} minutes
+        Deadline: {task.deadline.isoformat() if task.deadline else 'None'}
+        Completion: {task.completion}%
+        Parent Task: {task.parent.name if task.parent else 'None'}
+        Subtasks: {len(task.subtasks)}
+                """.strip()
         text = urwid.Text(details)
         back_button = urwid.Button("← Back", on_press=self.back_to_main)
         edit_button = urwid.Button("✏️ Edit Task", on_press=self.edit_task, user_data=task)
@@ -384,6 +453,233 @@ Subtasks: {len(task.subtasks)}
         self.back_to_main(None)
 
 
+    # ----------------------------
+    # Time slot management methods
+    # ----------------------------
+
+    def _build_time_slot_widgets(self, items):
+        """Build time slot widgets"""
+        for slot in self.scheduler.time_slots:
+            task_info = ""
+            if slot.assigned_task:
+                task_info = f" - 📌 {slot.assigned_task.name}"
+
+            btn = urwid.Button(
+                f"🕒 {slot.start_time.strftime('%H:%M')}-{slot.end_time.strftime('%H:%M')}{task_info}",
+                on_press=self.on_time_slot_click,
+                user_data=slot
+            )
+            attr = 'selected_task' if slot == self.selected_time_slot else None
+            btn_map = urwid.AttrMap(btn, attr, focus_map='reversed')
+            btn_map.original_slot = slot
+            items.append(btn_map)
+
+    def _refresh_time_slots(self):
+        """Refresh time slot display"""
+        try:
+            items = []
+            for slot in self.scheduler.time_slots:
+                btn = urwid.Button(
+                    f"{slot.start_time.strftime('%Y-%m-%d %H:%M')}  <------->  {slot.end_time.strftime('%Y-%m-%d %H:%M')}",
+                    on_press=self.on_time_slot_click,
+                    user_data=slot
+                )
+                items.append(urwid.AttrMap(btn, None, focus_map='reversed'))
+
+            # Add time slot controls
+            items.append(urwid.Divider())
+            items.append(urwid.AttrMap(
+                urwid.Button("➕ Add Time Slot", on_press=self.add_time_slot_dialog),
+                None, focus_map='reversed'
+            ))
+
+            self.time_slot_walker[:] = items
+        except Exception as e:
+            self.footer.set_text(("error", f"Time slot error: {str(e)}"))
+
+    def _show_popup(self, content, title):
+        """Show a modal popup dialog"""
+        popup = urwid.LineBox(urwid.Filler(content), title=title)
+        self.main_loop.widget = urwid.Overlay(
+            popup,
+            self.columns,
+            align='center',
+            width=('relative', 80),
+            valign='middle',
+            height=('relative', 80)
+        )
+
+    # New time slot management methods
+    def add_time_slot_dialog(self, button):
+        """Show time slot creation dialog"""
+        start_edit = urwid.Edit("Start time (YYYY-MM-DD HH:MM): ")
+        end_edit = urwid.Edit("End time (YYYY-MM-DD HH:MM): ")
+
+        # Store references to the input fields
+        self.current_dialog = {
+            'start_edit': start_edit,
+            'end_edit': end_edit
+        }
+
+        done_btn = urwid.Button("Add", self.do_add_time_slot)
+        cancel_btn = urwid.Button("Cancel", self.back_to_main)
+
+        pile = urwid.Pile([
+            start_edit,
+            end_edit,
+            urwid.Divider(),
+            urwid.Columns([
+                urwid.AttrMap(done_btn, None, focus_map='reversed'),
+                urwid.AttrMap(cancel_btn, None, focus_map='reversed')
+            ])
+        ])
+
+        self._show_popup(pile, "New Time Slot")
+
+    def do_add_time_slot(self, button):
+        """Create time slot using original interface"""
+        try:
+            # Access stored dialog fields
+            start_str = self.current_dialog['start_edit'].edit_text
+            end_str = self.current_dialog['end_edit'].edit_text
+
+            # Clear dialog reference
+            # self.current_dialog = None
+
+            # print(f"start_str: {start_str}")
+            # print(f"end_str: {end_str}")
+
+            # Parse and create time slot
+            start_time = datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
+            end_time = datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+
+            new_slot = TimeSlot(start_time, end_time)
+            self.scheduler.add_time_slot(new_slot)
+            self.scheduler.schedule_tasks()
+            self.scheduler.save_schedule()
+            print("time slots successfully scheduled and saved")
+
+            self._refresh_time_slots()
+            self.back_to_main(None)
+
+        except ValueError as e:
+            self.footer.set_text(("error", f"Invalid time: {str(e)}"))
+
+    def on_time_slot_click(self, button, time_slot):
+        """Handle time slot selection"""
+        if self.move_mode_active:
+            # Implement time slot movement logic if needed
+            pass
+        else:
+            self.view_time_slot_details(button, time_slot)
+
+    def view_time_slot_details(self, button, time_slot):
+        """Show time slot details popup"""
+        details = f"""
+Start: {time_slot.start_time.strftime('%Y-%m-%d %H:%M')}
+End: {time_slot.end_time.strftime('%Y-%m-%d %H:%M')}
+Duration: {time_slot.duration} minutes
+        """.strip()
+        text = urwid.Text(details)
+        edit_btn = urwid.Button("✏️ Edit", lambda _: self.edit_time_slot(time_slot))
+        delete_btn = urwid.Button("🗑️ Delete", lambda _: self.delete_time_slot(time_slot))
+        back_btn = urwid.Button("← Back", self.back_to_main)
+
+        pile = urwid.Pile([
+            text,
+            urwid.Divider(),
+            edit_btn,
+            delete_btn,
+            urwid.Divider(),
+            back_btn
+        ])
+        self._show_popup(pile, "Time Slot Details")
+
+    def edit_time_slot(self, time_slot):
+        """Edit an existing time slot"""
+        # Store reference to the original time slot
+        self._original_time_slot = time_slot
+
+        # Create input fields with current values
+        start_edit = urwid.Edit("Start time: ", time_slot.start_time.strftime("%Y-%m-%d %H:%M"))
+        end_edit = urwid.Edit("End time: ", time_slot.end_time.strftime("%Y-%m-%d %H:%M"))
+
+        # Store dialog references
+        self.current_dialog = {
+            'start_edit': start_edit,
+            'end_edit': end_edit
+        }
+
+        # Create buttons
+        save_btn = urwid.Button("💾 Save", self._do_edit_time_slot)
+        cancel_btn = urwid.Button("❌ Cancel", self.back_to_main)
+
+        # Build layout
+        pile = urwid.Pile([
+            start_edit,
+            end_edit,
+            urwid.Divider(),
+            urwid.Columns([
+                urwid.AttrMap(save_btn, None, focus_map='reversed'),
+                urwid.AttrMap(cancel_btn, None, focus_map='reversed')
+            ])
+        ])
+
+        self._show_popup(pile, "Edit Time Slot")
+
+    def _do_edit_time_slot(self, button):
+        """Handle the actual editing logic"""
+        try:
+            # Get input values
+            start_str = self.current_dialog['start_edit'].edit_text
+            end_str = self.current_dialog['end_edit'].edit_text
+
+            # Clear dialog reference
+            self.current_dialog = None
+
+            # Parse datetime values
+            new_start = datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
+            new_end = datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+
+            # Validate times
+            if new_end <= new_start:
+                raise ValueError("End time must be after start time")
+
+            # Create new time slot (preserving original interface)
+            updated_slot = TimeSlot(new_start, new_end)
+
+            # Replace in scheduler
+            index = self.scheduler.time_slots.index(self._original_time_slot)
+            self.scheduler.time_slots[index] = updated_slot
+            self.scheduler.time_slots.sort()
+
+            # Save and refresh
+            self.scheduler.save_schedule()
+            self._refresh_time_slots()
+            self.back_to_main(None)
+            self.footer.set_text(("success", "Time slot updated successfully"))
+
+        except ValueError as e:
+            self.footer.set_text(("error", f"Invalid input: {str(e)}"))
+        finally:
+            self._original_time_slot = None
+
+    def delete_time_slot(self, time_slot):
+        """Delete selected time slot"""
+        self.scheduler.time_slots.remove(time_slot)
+        self.scheduler.save_schedule()
+        self.refresh_view()
+        self.back_to_main(None)
+
+    def _show_popup(self, widget, title):
+        """Helper to show popup dialogs"""
+        popup = urwid.LineBox(urwid.Filler(widget), title=title)
+        overlay = urwid.Overlay(popup, self.columns,
+                                align='center', width=('relative', 80),
+                                valign='middle', height=('relative', 80))
+        self.main_loop.widget = overlay
+
+
 def run_interactive_mode(scheduler_name: str):
     """Run the interactive mode with proper error handling"""
     try:
@@ -393,7 +689,7 @@ def run_interactive_mode(scheduler_name: str):
         print(f"Error starting interactive mode: {e}", file=sys.stderr)
         sys.exit(1)
     finally:
-        ## reschedule the tasks after potential changes (temporary fix)
+        # Reschedule the tasks after potential changes (temporary fix)
         scheduler = TaskScheduler(scheduler_name)
         scheduler.load_scheduler()
         scheduler.schedule_tasks()
