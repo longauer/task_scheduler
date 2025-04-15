@@ -5,6 +5,7 @@ import subprocess
 from task_scheduler.task import Task
 import tempfile
 import os
+import sys
 
 ## returning remaining time till deadline in seconds
 def time_till_deadline(task: Task) -> int:
@@ -52,34 +53,38 @@ def time_slot_covering(timeslots: List[TimeSlot]) -> List[TimeSlot]:
     return result_slots
 
 def open_with_vim(file_path: str) -> None:
-    subprocess.run(['vim', file_path])
+    """Open file with Vim in a cross-platform compatible way"""
+    if sys.platform == "win32":
+        # Handle Windows path spacing and shell resolution
+        subprocess.run(f'vim "{file_path}"', shell=True)
+    else:
+        subprocess.run(['vim', file_path])
 
 def vim_extract() -> str:
-    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w+", delete=False) as tmp_file:
+    """Universal version that handles Windows file locking"""
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as tmp_file:
         tmp_path = tmp_file.name
+    tmp_file.close()  # Explicit close for Windows compatibility
 
     open_with_vim(tmp_path)
 
-    # Reopen the file for reading after vim edits
-    with open(tmp_path, "r") as f:
+    with open(tmp_path, "r", newline='') as f:  # Universal newline support
         content = f.read()
 
     os.remove(tmp_path)
-
     return content
 
 def vim_edit(content: str) -> str:
-    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w+", delete=False) as tmp_file:
+    """Cross-platform compatible edit function"""
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as tmp_file:
         tmp_file.write(content)
-        tmp_file.flush()
         tmp_path = tmp_file.name
+    tmp_file.close()  # Ensure file handle release before editing
 
     open_with_vim(tmp_path)
 
-    # Reopen to read after vim edit
-    with open(tmp_path, "r") as f:
+    with open(tmp_path, "r", newline='') as f:  # Normalize line endings
         edited_content = f.read()
 
     os.remove(tmp_path)
-
     return edited_content
