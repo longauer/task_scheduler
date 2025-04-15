@@ -286,10 +286,14 @@ class InteractiveApp:
             self.update_focus_indicator()
             return
         elif key == 'a':
-            self.add_new_task(None)
+            if self.current_focus == 'tasks':
+                self.add_new_task(None)
+            else:
+                self.add_time_slot_dialog(None)
             return
         elif key == 'm':
-            self.toggle_move_mode()
+            if self.current_focus == 'tasks':
+                self.toggle_move_mode()
             return
         elif key == 'esc' and self.move_mode_active:
             self.cancel_move()
@@ -545,9 +549,6 @@ class InteractiveApp:
 
             # Clear dialog reference
             # self.current_dialog = None
-
-            # print(f"start_str: {start_str}")
-            # print(f"end_str: {end_str}")
 
             # Parse and create time slot
             start_time = datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
