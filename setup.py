@@ -6,7 +6,7 @@ def read_requirements():
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 setup(
-    name="task_scheduler",
+    name="task-scheduler-x",
     version="1.0.0",
     author="Samuel Longauer",
     author_email="samuel.longauer@gmail.com",
