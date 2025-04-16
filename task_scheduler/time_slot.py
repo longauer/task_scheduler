@@ -8,6 +8,10 @@ class TimeSlot:
 
         self.end_time = end_time
 
+    def duration(self):
+
+        return (self.end_time - self.start_time).total_seconds()/60 
+
     def to_dict(self):
         return {
             "start_time": self.start_time.isoformat(),

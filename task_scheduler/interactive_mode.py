@@ -472,9 +472,6 @@ class InteractiveApp:
     def _build_time_slot_widgets(self, items):
         """Build time slot widgets"""
         for slot in self.scheduler.time_slots:
-            task_info = ""
-            if slot.assigned_task:
-                task_info = f" - 📌 {slot.assigned_task.name}"
 
             btn = urwid.Button(
                 f"🕒 {slot.start_time.strftime('%H:%M')}-{slot.end_time.strftime('%H:%M')}{task_info}",
@@ -521,7 +518,6 @@ class InteractiveApp:
             height=('relative', 80)
         )
 
-    # New time slot management methods
     def add_time_slot_dialog(self, button):
         """Show time slot creation dialog"""
         start_edit = urwid.Edit("Start time (YYYY-MM-DD HH:MM): ")
@@ -566,7 +562,6 @@ class InteractiveApp:
             self.scheduler.add_time_slot(new_slot)
             self.scheduler.schedule_tasks()
             self.scheduler.save_schedule()
-            print("time slots successfully scheduled and saved")
 
             self._refresh_time_slots()
             self.back_to_main(None)
@@ -587,7 +582,7 @@ class InteractiveApp:
         details = f"""
 Start: {time_slot.start_time.strftime('%Y-%m-%d %H:%M')}
 End: {time_slot.end_time.strftime('%Y-%m-%d %H:%M')}
-Duration: {time_slot.duration} minutes
+Duration: {time_slot.duration()} hours
         """.strip()
         text = urwid.Text(details)
         edit_btn = urwid.Button("✏️ Edit", lambda _: self.edit_time_slot(time_slot))
