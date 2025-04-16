@@ -358,7 +358,7 @@ class InteractiveApp:
 
         text = urwid.Text(details)
         back_button = urwid.Button("← Back", on_press=self.back_to_main)
-        edit_button = urwid.Button("✏️ Edit Task", on_press=self.edit_task, user_data=task)
+        edit_button = urwid.Button("✏️ Edit Task", lambda _: self.edit_task_dialog(button=None, task=task))
         delete_button = urwid.Button("🗑️ Delete Task", on_press=self.delete_task, user_data=task)
         completed_button = urwid.Button("✅ Completed", on_press=self.completed_task, user_data=task)
 
@@ -377,25 +377,136 @@ class InteractiveApp:
     def back_to_main(self, button):
         self.start()
 
-    def edit_task(self, button, task: Task):
-        new_name = vim_edit(task.name or "")
-        new_desc = vim_edit(task.description or "")
-        new_duration = vim_edit("" if not task.duration else str(task.duration))
-        new_deadline = vim_edit(task.deadline.isoformat() if task.deadline else "")
+    def edit_task_dialog(self, button, task: Task):
+        """Show task editing options with proper back navigation"""
+        # Store reference to current view
+        self.previous_view = self.main_loop.widget
 
-        task.name = new_name.strip()
-        task.description = new_desc.strip()
-        task.duration = int(new_duration.strip()) if new_duration.strip().isdigit() else 0
+        options = [
+            ("📝 Name", lambda _: self.edit_task_field(task, "name")),
+            ("📄 Description", lambda _: self.edit_task_field(task, "description")),
+            ("⏱ Duration", lambda _: self.edit_task_field(task, "duration")),
+            ("📅 Deadline", lambda _: self.edit_task_field(task, "deadline")),
+            ("✅ Completion", lambda _: self.edit_task_field(task, "completion")),
+            ("🔙 Back", lambda _: (self.back_to_main, self.view_task_details(None, task)))
+        ]
+
+        # Create formatted menu items
+        menu_items = []
+        for text, callback in options:
+            btn = urwid.AttrMap(
+                urwid.Button(text, callback),
+                None, focus_map='reversed'
+            )
+            menu_items.append(urwid.Padding(btn, align='center', width=('relative', 80)))
+            menu_items.append(urwid.Divider())
+
+        # Create centered popup content
+        pile = urwid.Pile(menu_items[:-1])  # Remove last divider
+        content = urwid.Filler(pile, valign='top')
+        popup = urwid.LineBox(
+            content,
+            title=f"Edit {task.name[:15]}...",
+            title_align='left'
+        )
+
+        # Create overlay with consistent sizing
+        self.main_loop.widget = urwid.Overlay(
+            popup,
+            self.previous_view,
+            align='center', width=('relative', 25),
+            valign='middle', height=('relative', 25)
+        )
+
+    def edit_task_field(self, task: Task, field: str):
+        """Edit specific task field with validation"""
+
+        current_value = getattr(task, field)
+
+        # Format current value for display
+        if field == "deadline" and current_value:
+            edit_text = current_value.isoformat(sep=" ", timespec="minutes")
+        elif field == "completion":
+            edit_text = str(int(current_value))
+        elif field == "description":
+            # Use existing vim-based editing
+            edit_text = vim_edit(task.description or "")
+            self.save_task_edit(task, field, edit_text)
+            self.back_to_main(None)
+        else:
+            edit_text = str(current_value)
+
+        # Create edit box
+        edit = urwid.Edit(("bold", f"New {field.replace('_', ' ')}:\n"), edit_text)
+
+        # Create proper callbacks
+        def save_callback(_):
+            self.save_task_edit(task, field, edit.edit_text)
+            self.main_loop.widget = self.previous_view  # Close popup
+            self.view_task_details(None, task)  # Refresh details
+
+        def cancel_callback(_):
+            self.main_loop.widget = self.previous_view  # Just close popup
+
+        # Create buttons
+        save_btn = urwid.Button("💾 Save", save_callback)
+        cancel_btn = urwid.Button("❌ Cancel", cancel_callback)
+
+        # Build layout
+        pile = urwid.Pile([
+            edit,
+            urwid.Divider(),
+            urwid.Columns([
+                urwid.AttrMap(save_btn, None, focus_map='reversed'),
+                urwid.AttrMap(cancel_btn, None, focus_map='reversed')
+            ])
+        ])
+
+        # Show edit dialog
+        popup = urwid.LineBox(urwid.Filler(pile), title=f"Edit {field.title()}")
+        self.main_loop.widget = urwid.Overlay(
+            popup,
+            self.main_loop.widget,
+            align='center', width=('relative', 25),
+            valign='middle', height=('relative', 25)
+        )
+
+    def save_task_edit(self, task: Task, field: str, value: str):
+        """Validate and save edited field"""
         try:
-            dt = datetime.datetime.fromisoformat(new_deadline.strip())
-            task.deadline = dt
-        except ValueError:
-            task.deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59")
+            # Field-specific validation
+            if field == "name":
+                if not value.strip():
+                    raise ValueError("Name cannot be empty")
+                task.name = value.strip()
 
-        self.scheduler.schedule_tasks()
-        self.scheduler.save_schedule()
-        self.back_to_main(None)
-        self.refresh_view(maintain_focus=True)
+            elif field == "description":
+                task.description = value.strip()
+
+            elif field == "duration":
+                duration = int(value)
+                if duration <= 0:
+                    raise ValueError("Duration must be positive")
+                task.duration = duration
+
+            elif field == "deadline":
+                if value.lower() == "none":
+                    task.deadline = None
+                else:
+                    task.deadline = datetime.datetime.fromisoformat(value)
+
+            elif field == "completion":
+                completion = int(value)
+                if not 0 <= completion <= 100:
+                    raise ValueError("Completion must be 0-100")
+                task.completion = completion
+
+            # Save changes
+            self.scheduler.save_schedule()
+            self.refresh_view(maintain_focus=True)
+
+        except Exception as e:
+            self.footer.set_text(("error", f"Invalid value: {str(e)}"))
 
     def delete_task(self, button, task: Task):
         # Confirm deletion
@@ -474,7 +585,7 @@ class InteractiveApp:
         for slot in self.scheduler.time_slots:
 
             btn = urwid.Button(
-                f"🕒 {slot.start_time.strftime('%H:%M')}-{slot.end_time.strftime('%H:%M')}{task_info}",
+                f"🕒 {slot.start_time.strftime('%H:%M')}-{slot.end_time.strftime('%H:%M')}",
                 on_press=self.on_time_slot_click,
                 user_data=slot
             )
@@ -505,18 +616,6 @@ class InteractiveApp:
             self.time_slot_walker[:] = items
         except Exception as e:
             self.footer.set_text(("error", f"Time slot error: {str(e)}"))
-
-    def _show_popup(self, content, title):
-        """Show a modal popup dialog"""
-        popup = urwid.LineBox(urwid.Filler(content), title=title)
-        self.main_loop.widget = urwid.Overlay(
-            popup,
-            self.columns,
-            align='center',
-            width=('relative', 80),
-            valign='middle',
-            height=('relative', 80)
-        )
 
     def add_time_slot_dialog(self, button):
         """Show time slot creation dialog"""

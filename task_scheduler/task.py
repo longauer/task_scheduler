@@ -1,5 +1,5 @@
 import datetime as datetime
-from typing import Optional
+from typing import Optional, Iterable
 
 class Task:
     def __init__(self, name, description = None, deadline: datetime = None, duration: int = 0, parent: Optional["Task"] = None):
@@ -162,9 +162,8 @@ class Task:
         return self.deadline < other.deadline
 
 
-    ## TODO: annotate container as an iterable
     @staticmethod
-    def find_task_by_name(name, container):
+    def find_task_by_name(name: str, container: Iterable["Task"]) -> Optional["Task"]:
         """Search for a task by name in a nested task structure."""
 
         for task in container:
