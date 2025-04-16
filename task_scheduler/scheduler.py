@@ -64,7 +64,6 @@ class TaskScheduler:
 
 
         if not task:
-            print("not a task")
 
             matches = difflib.get_close_matches(task_name, [task.name for task in self.tasks])
             msg = f"Task '{task_name}' not found."
@@ -120,17 +119,19 @@ class TaskScheduler:
         ## filter out the completed tasks:
         lowest_level_tasks = list(filter(lambda task: task.completion < 100, lowest_level_tasks))
 
+
         ## filter out the tasks with unset duration
         lowest_level_tasks = list(filter(lambda task: task.duration != 0, lowest_level_tasks))
-
 
 
         ## keep adding tasks to free time_slots until possible (while continuously checking for deadlines and tiem left available for the current clot)
 
         impossible_to_schedule = list()
-
+        shift = 0
         iterator = iter(lowest_level_tasks)
+        
         for ind, task in enumerate(iterator):
+
 
             for ind1, time_slot in enumerate(self.time_slots):
 
@@ -147,16 +148,21 @@ class TaskScheduler:
                 else:
 
                     if ind1 == len(self.time_slots) - 1:
+                        
                         impossible_to_schedule.append(task.name)
 
-                    root = task.get_root()
-                    shift = 0
-
-                    while ind+shift+1 < len(lowest_level_tasks) and lowest_level_tasks[ind+shift+1].get_root() is root:
-
-                        shift += 1
-
-                        impossible_to_schedule.append(next(iterator, None).name)
+                        root = task.get_root()
+                        
+                        while ind + shift + 1 < len(lowest_level_tasks) and lowest_level_tasks[ind + shift + 1].get_root() is root:
+                            
+                            shift += 1
+                            
+                            next_task = next(iterator, None)  # defensive programming ig
+                            
+                            if next_task is not None:
+                                
+                                impossible_to_schedule.append(next_task.name)
+                                
 
         if len(impossible_to_schedule) > 0 and show_unscheduled:
             print("impossible_to_schedule:", ", ".join(impossible_to_schedule), file=sys.stderr)
