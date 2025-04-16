@@ -130,7 +130,6 @@ class TaskScheduler:
         impossible_to_schedule = list()
 
         iterator = iter(lowest_level_tasks)
-        shift = 0
         for ind, task in enumerate(iterator):
 
             for ind1, time_slot in enumerate(self.time_slots):
@@ -151,6 +150,7 @@ class TaskScheduler:
                         impossible_to_schedule.append(task.name)
 
                     root = task.get_root()
+                    shift = 0
 
                     while ind+shift+1 < len(lowest_level_tasks) and lowest_level_tasks[ind+shift+1].get_root() is root:
 
