@@ -485,8 +485,8 @@ class InteractiveApp:
 
             elif field == "duration":
                 duration = int(value)
-                if duration <= 0:
-                    raise ValueError("Duration must be positive")
+                if duration < 0:
+                    raise ValueError("Duration must be non-negative")
                 task.duration = duration
 
             elif field == "deadline":

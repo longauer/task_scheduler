@@ -158,9 +158,6 @@ class CommandProcessor:
         if description == "MISSING":
             description = vim_extract()
 
-        if duration == "MISSING":
-            duration = vim_extract()
-
         ## construting the Task object
         task = Task(name=name, description=description, duration=duration, deadline= None if not deadline else datetime.datetime.fromisoformat(deadline))
 
@@ -222,9 +219,6 @@ class CommandProcessor:
         if description == "MISSING":
             description = vim_extract()
 
-        if duration == "MISSING":
-            duration = vim_extract()
-
         ## adding the subtask to to the list of subtasks of the original task
         task.divide(name=name, description=description, duration=duration)
 
@@ -255,35 +249,15 @@ class CommandProcessor:
             sys.exit(1)
 
         ## inputting missing arguments through vim editor
+
         if name == "MISSING":
-            name = vim_edit("" if task.name is None else task.name)
+            name = vim_edit("" if task.description is None else task.description)
 
         if description == "MISSING":
             description = vim_edit("" if task.description is None else task.description)
 
-        if duration == "MISSING":
-            duration = vim_edit("" if task.duration is None else str(task.duration))
-            print(f"duration: {duration}")
-            if duration.strip() == "":
-                duration = None
-            elif not duration.strip().isdigit():
-                print("The value for duration is not an int")
-                sys.exit(1)
-            else:
-                duration = int(duration.strip())
-
         if deadline == "MISSING":
             deadline = vim_edit("" if task.deadline is None else task.deadline.isoformat()).strip()
-
-        if completion == "MISSING":
-            completion = vim_edit("" if task.completion is None else str(task.completion))
-            if completion.strip() == "":
-                completion = None
-            elif not completion.strip().isdigit():
-                print("The value for completion is not an int")
-                sys.exit(1)
-            else:
-                completion = int(completion.strip())
 
         if name != None:
 
@@ -510,7 +484,7 @@ def parse_args():
     add_task_parser.add_argument('scheduler_name', help='Name of the scheduler for the task to be added to')
     add_task_parser.add_argument('-n', '--name', nargs='?', const='MISSING', help='Name of the task')
     add_task_parser.add_argument('-desc', '--description', nargs='?', const='MISSING', help='Description of the task')
-    add_task_parser.add_argument('-dur', '--duration', nargs='?', const='MISSING', type=int, help='Duration of the task in minutes')
+    add_task_parser.add_argument('-dur', '--duration', type=int, help='Duration of the task in minutes')
     add_task_parser.add_argument('-dl', '--deadline', type=str, nargs='?', const='MISSING', help='Deadline of the task in the iso format')
 
     # Subcommand: divide_task
@@ -519,7 +493,7 @@ def parse_args():
     divide_task_parser.add_argument('original_task_name', help='Name of the task')
     divide_task_parser.add_argument('-n', '--name', nargs='?', const='MISSING', required=True, help='Name of the task')
     divide_task_parser.add_argument('-desc', '--description', nargs='?', const='MISSING', help='Description of the task')
-    divide_task_parser.add_argument('-dur', '--duration', nargs='?', const='MISSING', type=int, help='Duration of the task in minutes')
+    divide_task_parser.add_argument('-dur', '--duration', type=int, help='Duration of the task in minutes')
 
 
     # Subcommand: mark a task as completed
@@ -534,8 +508,8 @@ def parse_args():
     update_task_parser.add_argument('-n', '--name', nargs='?', const='MISSING', help='New name for the task')
     update_task_parser.add_argument('-desc', '--description', nargs='?', const='MISSING', help='New description for the task')
     update_task_parser.add_argument('-dl', '--deadline', nargs='?', const='MISSING', help='New deadline for the task')
-    update_task_parser.add_argument('-dur', '--duration', nargs='?', const='MISSING', help='New duration for the task in minutes')
-    update_task_parser.add_argument('-c', '--completion', nargs='?', const='MISSING', help='New completion for the task in percentage')
+    update_task_parser.add_argument('-dur', '--duration', nargs='?', type=int, help='New duration for the task in minutes')
+    update_task_parser.add_argument('-c', '--completion', type=int, help='New completion for the task in percentage')
 
     # Subcommand: delete_task
     delete_task_parser = subparsers.add_parser('delete_task', help='Delete a task from the TaskScheduler')
