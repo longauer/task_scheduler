@@ -1,5 +1,4 @@
 import datetime
-from typing import Optional
 
 class TimeSlot:
     def __init__(self, start_time: datetime, end_time: datetime):
@@ -26,6 +25,7 @@ class TimeSlot:
         end_time = time_slot["end_time"]
 
         return TimeSlot(datetime.datetime.fromisoformat(start_time), datetime.datetime.fromisoformat(end_time))
+
     def duration(self):
         return self.end_time - self.start_time
 
@@ -34,6 +34,12 @@ class TimeSlot:
 
     def __lt__(self, other):
         return self.start_time < other.start_time
+
+    def __le__(self, other):
+        return self.start_time <= other.start_time
+
+    def __ge__(self, other):
+        return self.start_time >= other.start_time
 
     def __hash__(self):
         return hash((self.start_time, self.end_time))

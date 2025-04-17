@@ -15,6 +15,7 @@ import shutil
 import datetime
 import sys
 
+
 ## Schedule instance contains following 3 data structures
 ## - sorted list of time_slots
 ## - sorted list of tasks ordered by deadlines
@@ -27,16 +28,17 @@ class TaskScheduler:
 
         self.schedule_name = schedule_name
 
-        self.time_slots = list() ## adding new instances with bisect.insort -- keepint the list sorted
+        self.time_slots = list()  ## adding new instances with bisect.insort -- keepint the list sorted
 
-        self.tasks = list() ## adding new instances with bisect.insort
+        self.tasks = list()  ## adding new instances with bisect.insort
 
-        self.scheduled_tasks = defaultdict(deque) ## after initialization a dict (keys: time_slots, values: dequeue instances)
+        self.scheduled_tasks = defaultdict(
+            deque)  ## after initialization a dict (keys: time_slots, values: dequeue instances)
 
         self.storage = Storage()
 
     ## time_slots
-    def add_time_slot(self, time_slot): ## assuming passing initialized TimeSlot objects
+    def add_time_slot(self, time_slot):  ## assuming passing initialized TimeSlot objects
 
         bisect.insort(self.time_slots, time_slot)
 
@@ -52,7 +54,7 @@ class TaskScheduler:
         self.time_slots = list(filter(lambda slot: slot.end_time >= time_now, self.time_slots))
 
     ## tasks
-    def add_task(self, task: Optional["Task"]): ## adding a task with a deadline
+    def add_task(self, task: Optional["Task"]):  ## adding a task with a deadline
 
         bisect.insort(self.tasks, task)
 
@@ -61,7 +63,6 @@ class TaskScheduler:
 
         ## ensuring consistency of duration and completion of ancestors
         task = self.get_task_by_name(task_name)
-
 
         if not task:
 
@@ -72,7 +73,6 @@ class TaskScheduler:
 
             print(msg, file=sys.stderr)
             sys.exit(1)
-
 
         task.duration, task.completion = 0, 0
 
@@ -119,50 +119,55 @@ class TaskScheduler:
         ## filter out the completed tasks:
         lowest_level_tasks = list(filter(lambda task: task.completion < 100, lowest_level_tasks))
 
-
         ## filter out the tasks with unset duration
         lowest_level_tasks = list(filter(lambda task: task.duration != 0, lowest_level_tasks))
-
 
         ## keep adding tasks to free time_slots until possible (while continuously checking for deadlines and tiem left available for the current clot)
 
         impossible_to_schedule = list()
+        scheduling_result = dict()  ## task.name -> time_slot
         shift = 0
         iterator = iter(lowest_level_tasks)
-        
-        for ind, task in enumerate(iterator):
 
+        for ind, task in enumerate(iterator):
 
             for ind1, time_slot in enumerate(self.time_slots):
 
                 ## calculating the remaining time for the current time slot
-                available_time = (min(time_slot.end_time, task.deadline) - max(datetime.datetime.now(), time_slot.start_time)).total_seconds()/60 - (0 if time_slot not in self.scheduled_tasks else
-                                                                         sum([t.duration for t in self.scheduled_tasks[time_slot]]))
+                available_time = (min(time_slot.end_time, task.deadline) - max(datetime.datetime.now(),
+                                                                               time_slot.start_time)).total_seconds() / 60 - (
+                                     0 if time_slot not in self.scheduled_tasks else
+                                     sum([t.duration for t in self.scheduled_tasks[time_slot]]))
 
-                if task.duration <= available_time:
+
+                task_root = task.get_root()
+
+                if (task.duration <= available_time) and (task_root not in scheduling_result or scheduling_result[task_root] <= time_slot):
 
                     self.scheduled_tasks[time_slot].append(task)
+
+                    scheduling_result[task.get_root()] = time_slot
 
                     break
 
                 else:
 
                     if ind1 == len(self.time_slots) - 1:
-                        
+
                         impossible_to_schedule.append(task.name)
 
                         root = task.get_root()
-                        
-                        while ind + shift + 1 < len(lowest_level_tasks) and lowest_level_tasks[ind + shift + 1].get_root() is root:
+
+                        while ind + shift + 1 < len(lowest_level_tasks) and lowest_level_tasks[
                             
+                            ind + shift + 1].get_root() is root:
+
                             shift += 1
-                            
+
                             next_task = next(iterator, None)  # defensive programming ig
-                            
+
                             if next_task is not None:
-                                
                                 impossible_to_schedule.append(next_task.name)
-                                
 
         if len(impossible_to_schedule) > 0 and show_unscheduled:
             print("impossible_to_schedule:", ", ".join(impossible_to_schedule), file=sys.stderr)
@@ -176,7 +181,6 @@ class TaskScheduler:
         for ts in self.time_slots:
 
             if len(self.scheduled_tasks[ts]) > 0:
-
                 time_slot = ts
 
                 break
@@ -202,7 +206,6 @@ class TaskScheduler:
 
         return list(filter(lambda s: (time_now - s.deadline).total_seconds() > 0, self.tasks))
 
-
     def to_dict(self):
         """ user data preprocessing for serialization"""
 
@@ -215,15 +218,16 @@ class TaskScheduler:
     def schedule_to_dict(self):
         """ schedule preprocessing for serialization """
 
-        apply_to_dict = lambda x : list(map(lambda y: y.to_dict(), x))
+        apply_to_dict = lambda x: list(map(lambda y: y.to_dict(), x))
 
-        return [{"start_time": key.start_time.isoformat(), "end_time": key.end_time.isoformat(), "tasks": list(apply_to_dict(self.scheduled_tasks[key]))} for key in self.scheduled_tasks.keys()]
+        return [{"start_time": key.start_time.isoformat(), "end_time": key.end_time.isoformat(),
+                 "tasks": list(apply_to_dict(self.scheduled_tasks[key]))} for key in self.scheduled_tasks.keys()]
 
     def save_schedule(self):
 
         script_dir = Path(__file__).parent
 
-        path = script_dir/ "../data" / self.schedule_name
+        path = script_dir / "../data" / self.schedule_name
 
         path.mkdir(exist_ok=True, parents=True)
 
@@ -242,12 +246,12 @@ class TaskScheduler:
 
         state_json = self.storage.load(path_to_state)
 
-
         ## TaskScheduler object initialization
         self.schedule_name = state_json["schedule_name"]
 
         self.time_slots = list(map(lambda time_slot: TimeSlot(datetime.datetime.fromisoformat(time_slot["start_time"]),
-                                                              datetime.datetime.fromisoformat(time_slot["end_time"])), state_json["time_slots"]))
+                                                              datetime.datetime.fromisoformat(time_slot["end_time"])),
+                                   state_json["time_slots"]))
         self.tasks = self._construct_tasks(state_json["tasks"])
 
     def load_schedule(self):
@@ -260,9 +264,9 @@ class TaskScheduler:
         ## schedule initialization
 
         for slot in schedule_json:
-
             self.scheduled_tasks[TimeSlot(datetime.datetime.fromisoformat(slot["start_time"]),
-                                                datetime.datetime.fromisoformat(slot["end_time"]))] = deque(self._construct_tasks(slot["tasks"]))
+                                          datetime.datetime.fromisoformat(slot["end_time"]))] = deque(
+                self._construct_tasks(slot["tasks"]))
 
     def _construct_tasks(self, tasks: List[Dict[str, Any]]) -> List[Task]:
         ## filter arguments for initialization of a Task object
@@ -304,7 +308,6 @@ class TaskScheduler:
 
         return constructed_tasks
 
-
     @staticmethod
     def delete_schedule(schedule_name):
         script_dir = Path(__file__).parent
@@ -320,13 +323,11 @@ class TaskScheduler:
 
         ## loading the schedulers
         for scheduler in schedulers:
-
             scheduler.load_scheduler()
 
         ## collect tasks and slots
         joint_tasks = [task for scheduler in schedulers for task in scheduler.tasks]
         joint_time_slots = [time_slot for scheduler in schedulers for time_slot in scheduler.time_slots]
-
 
         result_scheduler = TaskScheduler(new_schedule_name)
 
@@ -340,7 +341,6 @@ class TaskScheduler:
 
 def main():
     ...
-
 
 
 if __name__ == "__main__":
