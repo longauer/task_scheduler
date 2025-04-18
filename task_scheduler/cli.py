@@ -251,10 +251,10 @@ class CommandProcessor:
         ## inputting missing arguments through vim editor
 
         if name == "MISSING":
-            name = vim_edit("" if task.description is None else task.description)
+            name = vim_edit("" if task.name is None else task.name)
 
         if description == "MISSING":
-            description = vim_edit("" if task.name is None else task.description)
+            description = vim_edit("" if task.description is None else task.description)
 
         if deadline == "MISSING":
             deadline = vim_edit("" if task.deadline is None else task.deadline.isoformat()).strip()
