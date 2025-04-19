@@ -429,10 +429,23 @@ class InteractiveApp:
         elif field == "completion":
             edit_text = str(int(current_value))
         elif field == "description":
-            # Use existing vim-based editing
-            edit_text = vim_edit(task.description or "")
-            self.save_task_edit(task, field, edit_text)
-            self.back_to_main(None)
+            # Windows-compatible edit handler
+
+            # Store current screen state
+            original_screen = self.main_loop.screen
+
+            try:
+                # Suspend Urwid's terminal handling
+                self.main_loop.screen.stop()
+
+                # Perform Vim editing
+                edit_text = vim_edit(task.description)
+
+            finally:
+                # Restore Urwid's terminal handling
+                self.main_loop.screen = original_screen
+                self.main_loop.screen.start()
+                self.refresh_view()
         else:
             edit_text = str(current_value)
 
@@ -481,7 +494,7 @@ class InteractiveApp:
                 task.name = value.strip()
 
             elif field == "description":
-                task.description = value.strip()
+                task.description = value
 
             elif field == "duration":
                 duration = int(value)
