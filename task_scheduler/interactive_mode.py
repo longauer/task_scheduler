@@ -79,7 +79,7 @@ class InteractiveApp:
             scheduler.load_schedule()
             return scheduler
         except Exception as e:
-            print(f"Failed to load scheduler: {e}", file=sys.stderr)
+            print(f"Error: schedule with the given name not found.", file=sys.stderr)
             sys.exit(1)
 
     def start(self):
@@ -804,3 +804,13 @@ def run_interactive_mode(scheduler_name: str):
     except Exception as e:
         print(f"Error starting interactive mode: {e}", file=sys.stderr)
         sys.exit(1)
+    finally:
+        # Reschedule the tasks after potential changes (temporary fix)
+        try:
+            scheduler = TaskScheduler(scheduler_name)
+            scheduler.load_scheduler()
+            scheduler.schedule_tasks()
+            scheduler.save_schedule()
+        except FileNotFoundError:
+            sys.exit(1)
+
