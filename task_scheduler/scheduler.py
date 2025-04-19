@@ -159,7 +159,7 @@ class TaskScheduler:
                         root = task.get_root()
 
                         while ind + shift + 1 < len(lowest_level_tasks) and lowest_level_tasks[
-                            
+
                             ind + shift + 1].get_root() is root:
 
                             shift += 1
@@ -244,7 +244,13 @@ class TaskScheduler:
         ## loading the initialization data from the json file
         path_to_state = Path(__file__).parent / "../data" / self.schedule_name / "schedule_state.json"
 
-        state_json = self.storage.load(path_to_state)
+        try:
+            state_json = self.storage.load(path_to_state)
+
+        except FileNotFoundError:
+
+            raise FileNotFoundError
+
 
         ## TaskScheduler object initialization
         self.schedule_name = state_json["schedule_name"]
@@ -259,7 +265,12 @@ class TaskScheduler:
         ##loading the schedule data from the json file
         path_to_schedule = Path(__file__).parent / "../data" / self.schedule_name / "schedule.json"
 
-        schedule_json = self.storage.load(path_to_schedule)
+        try:
+            schedule_json = self.storage.load(path_to_schedule)
+
+        except FileNotFoundError:
+
+            raise FileNotFoundError
 
         ## schedule initialization
 

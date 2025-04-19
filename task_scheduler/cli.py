@@ -55,7 +55,7 @@ class CommandProcessor:
 
         except FileNotFoundError:
 
-            print(f"Error: schedule with the give name not found.", file=sys.stderr)
+            print(f"Error: schedule with the given name not found.", file=sys.stderr)
 
             sys.exit(1)
 
@@ -251,7 +251,7 @@ class CommandProcessor:
         ## inputting missing arguments through vim editor
 
         if name == "MISSING":
-            name = vim_edit("" if task.name is None else task.name)
+            name = vim_edit("" if task.description is None else task.description)
 
         if description == "MISSING":
             description = vim_edit("" if task.description is None else task.description)

@@ -804,9 +804,3 @@ def run_interactive_mode(scheduler_name: str):
     except Exception as e:
         print(f"Error starting interactive mode: {e}", file=sys.stderr)
         sys.exit(1)
-    finally:
-        # Reschedule the tasks after potential changes (temporary fix)
-        scheduler = TaskScheduler(scheduler_name)
-        scheduler.load_scheduler()
-        scheduler.schedule_tasks()
-        scheduler.save_schedule()
