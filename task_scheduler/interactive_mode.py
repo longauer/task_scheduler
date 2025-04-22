@@ -3,6 +3,7 @@ from task_scheduler.scheduler import TaskScheduler
 from task_scheduler.utils import vim_edit
 from task_scheduler.task import Task
 from task_scheduler.time_slot import TimeSlot
+from copy import copy, deepcopy
 import datetime
 import sys
 
@@ -198,25 +199,20 @@ class InteractiveApp:
     def _execute_move(self, task_to_move, target_task):
         """Perform the actual movement of tasks"""
 
-        # Remove from current position
-        name = task_to_move.name
-        description = task_to_move.description
-        duration = task_to_move.duration
+        ## creating a deepcopy of a task
+        task_copy = deepcopy(task_to_move)
 
+        # Remove from current position
         if not self._remove_task(task_to_move):
             self.footer.set_text(("error", "Failed to remove from current position"))
             return False
 
-        # Add to new position
-        # target_task.subtasks.append(task_to_move)
-        # task_to_move.parent = target_task
+        #target_task.divide(name=name, description=description, duration=duration)
+        Task.move(task_copy, target_task)
 
-        target_task.divide(name=name, description=description, duration=duration)
         self.scheduler.schedule_tasks()
         self.scheduler.save_schedule()
 
-        # self.scheduler.schedule_tasks()
-        # self.scheduler.save_schedule()
         return True
 
     def _finalize_move(self):

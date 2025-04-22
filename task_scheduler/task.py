@@ -1,4 +1,5 @@
 import datetime as datetime
+from copy import copy, deepcopy
 from typing import Optional, Iterable
 
 class Task:
@@ -65,6 +66,18 @@ class Task:
         self.subtasks.append(new_task)
 
         self.__recalc()
+    
+    @staticmethod
+    def move(task_to_move, target_task):
+        ''' moving a task instance to list of subtasks of a target task '''
+
+        target_task.subtasks.append(task_to_move)
+
+        task_to_move.parent = target_task
+
+        target_task.__deadline_recalc()
+
+        target_task.__recalc()
 
     def delete(self, task_name):
         ''' method for deleting a subclass'''
@@ -83,6 +96,24 @@ class Task:
 
     def __hash__(self):
         return hash(self.name)
+
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            # the parent should be shallow copied
+            if k == "parent":
+                setattr(result, k, copy(v))
+            else:
+                setattr(result, k, deepcopy(v, memo))
+        return result
 
     def get_root(self):
 
@@ -132,6 +163,14 @@ class Task:
                 self._completion = sum(list(map(lambda x: x.completion*x.duration/self.duration, self.subtasks)))
 
             return self.completion
+
+    def __deadline_recalc(self):
+
+        for task in self.subtasks:
+
+            task.deadline = self.deadline
+
+            task.__deadline_recalc()
 
     def __recalc(self):
 
