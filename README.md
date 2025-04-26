@@ -278,7 +278,7 @@ pytest (for testing)
 
 - it may be a good idea to occasionally save a version of your scheduler. For this purpose the command **merge** can be used. Example: ``` task-scheduler merge -n MySchedule_backup -ns MySchedule ```
   
-- note that the order in which subtasks are added to a task is respected in scheduling. This is useful in situations when subtasks rely on completion of previous subtasks
+- note that the order in which subtasks are added to a task is respected in scheduling. This is useful in situations when subtasks depend on the completion of preceding subtasks
 
 - it only has an effect to edit completion/duration attributes of leaf tasks (tasks with 0 subtasks) since these attributes of tasks higher in the hierarchy are calculated based on those of the leaf tasks
 
