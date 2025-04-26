@@ -284,7 +284,7 @@ pytest (for testing)
 
 - conversely, it only has an effect to edit deadlines of top-level tasks (highest in the task hierarchy). Deadlines of the rest of the tasks always corresponds to that of their ancestor
 
-- the **view_calendar** command only shows the number of tasks and total completion of tasks (weighed by the duration) scheduled for each day. To show more details about individual tasks scheduled for a given day use **common_deadline**. Exapmle: ``` task-scheduler common_deadline MySchedule -m 12 -d 25``` (if you leave out the -m option the current month is chosen by default)
+- the **view_calendar** command only shows the number of tasks and total completion of tasks (weighed by duration) having deadlines on each given day (note: not being scheduled on but having a deadline on). To show more details about individual tasks due by a given day use **common_deadline**. Exapmle: ``` task-scheduler common_deadline MySchedule -m 12 -d 25``` (if you leave out the -m option the current month is chosen by default)
 
 - this application requires that **vim** be installed on your system. In certain scenarios, vim motions can be more efficient than editing your settings through **interactive mode** eg. adding multipe time slots. You can use the command **update_time_slots** to edit/add/remove your time slots using the vim interface.
 
