@@ -28,6 +28,13 @@ cd task_scheduler
 pip install -e .
 ```
 
+- package is also availabole at PyPI and under the name task-scheduler-x
+- it can be installed using
+
+```bash
+pip install task-scheduler-x
+```
+
 
 
 ## Docker Installation
@@ -259,6 +266,26 @@ colorama
 urwid
 
 pytest (for testing)
+
+
+## Remarks and Recommendations for Users
+
+- a colorful terminal application is required to get color-coded outputs in terminal
+
+- each scheduler instance stores two data files: schedule_state.json (storing all information input by the user), schedule.json (storing the result of the latest scheduling).
+  - rescheduling happens automatically after all kinds of edits and operations, not upon calling the command **view_schedule** however! This commands loads directly the schedule.json file, thus removing the need of schedule recalculation in series of view_schedule calls
+  - you can use the command **schedule_tasks** to recalculate your schedule - this command also lists impossible-to-schedule tasks in the terminal assuming your current settings
+
+- it may be a good idea to occasionally save a version of your scheduler. For this purpose the command **merge** can be used. Example: ``` task-scheduler merge -n MySchedule_backup -ns MySchedule ``` 
+
+- this application requires that **vim** be installed on your system. In ceratain scenarios, vim motions can more efficient than editing your settings through **interactive mode** eg. adding multipe time slots. You can use the command **update_time_slots** to edit/add/remove your time slots using the vim interface.
+
+- the application was so far tuned mainly for Unix-based operating systems (it works in windows as well but operations in the **interactive mode** are recommended to be carried mainly by mouse clicks)
+
+- the pip installs the source files and the JSON data files in two separate directories. Thanks to that, after reinstalling the package your data are not deleted from the file system on your machine. If you want to uninstall for good. The data files have to be deleted manually.
+
+
+
 
 
 ## Contributing
