@@ -28,7 +28,7 @@ cd task_scheduler
 pip install -e .
 ```
 
-- package is also availabole at PyPI and under the name task-scheduler-x
+- package is also availabole at PyPI under the name task-scheduler-x
 - it can be installed using
 
 ```bash
@@ -82,7 +82,6 @@ task-scheduler view_calendar MySchedule --month 3
 ## Interactive Mode
 
 ### Launch with:
-
 task-scheduler interactive MySchedule
 
 
@@ -199,22 +198,19 @@ example:
 
 
 ### Gantt Chart
-
 task-scheduler view_gantt MySchedule
 
 
 ### Calendar View
-
 task-scheduler view_calendar MySchedule --month 3
 
 
 ### Task Progress
-
 task-scheduler view_task MySchedule "Design Phase"
 
 output: 
 
-
+```
 === Task Details: Design Phase ===
 
 Name: Design Phase
@@ -223,6 +219,8 @@ Completion: 45.0%
 Duration: 360 min
 Subtasks: ['UI Mockups']
 Description: Initial design work
+
+```
 
 
 ## Testing
@@ -270,6 +268,7 @@ pytest (for testing)
 
 ## Remarks and Recommendations for Users
 
+
 - using the **view_next** command is the fastest way to view details about the next scheduled task
 
 - each scheduler instance stores two data files: schedule_state.json (storing all information input by the user), schedule.json (storing the result of the latest scheduling).
@@ -290,9 +289,9 @@ pytest (for testing)
 
 - a colorful terminal application is required to get color-coded outputs in terminal
 
-- the application was so far tuned mainly for Unix-based operating systems (it works in windows as well but operations in the **interactive mode** are recommended to be carried out mainly by mouse clicks)
+- the application was so far tuned mainly for Unix-based operating systems (it works in windows as well but operations in the **interactive mode** are recommended to be carried out mainly by mouse clicks to avoid lag)
 
-- the pip installs the source files and the JSON data files in two separate directories. Thanks to that, after reinstalling the package your data are not deleted from the file system on your machine. If you want to uninstall for good the data files have to be deleted manually.
+- the pip installs the source files and the JSON data files in two separate directories. Consequently, upon reinstalling the package your data are not deleted from the file system on your machine. If you want to uninstall for good the data files have to be deleted manually - ``` pip -V ``` command can be used to find the path to the package installation. Then look for the data/ directory.
 
 
 
