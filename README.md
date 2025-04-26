@@ -87,28 +87,20 @@ task-scheduler interactive MySchedule
 
 #### Controls:
 
-↑/↓ - Navigate tasks
-
-Enter - Select task
-
-a - Add new task
-
-m - Move task mode
-
-q - Quit
+- ↑/↓ - Navigate tasks
+- Enter - Select task
+- a - Add new task
+- m - Move task mode
+- q - Quit
 
 
 #### Features:
 
-Visual task hierarchy
-
-Vim-based task editing
-
-Drag-and-drop reorganization
-
-Real-time progress updates
-
-Color-coded deadlines
+- Visual task hierarchy
+- Vim-based task editing
+- Drag-and-drop reorganization
+- Real-time progress updates
+- Color-coded deadlines
 
 
 
@@ -117,18 +109,18 @@ Color-coded deadlines
 ### Controls:
 #### Navigation
 
-↑/↓ - Navigate items in focused panel
-Tab - Switch between task/time slot panels
-clicking on a task - selects the task
+- ↑/↓ - Navigate items in focused panel
+- Tab - Switch between task/time slot panels
+- clicking on a task - selects the task
 
 #### Actions
 
-Enter - Select task/time slot
-a - Add new task/time slot (depending on focused panel)
-m - Enter move mode (tasks) / Modify slot (time slots)
+- Enter - Select task/time slot
+- a - Add new task/time slot (depending on focused panel)
+- m - Enter move mode (tasks) / Modify slot (time slots)
 
 #### General
-q - Quit application
+- q - Quit application
 
 #### Key Features:
 
@@ -196,14 +188,11 @@ example:
 
 ## Visualisation Examples
 
-
 ### Gantt Chart
 task-scheduler view_gantt MySchedule
 
-
 ### Calendar View
 task-scheduler view_calendar MySchedule --month 3
-
 
 ### Task Progress
 task-scheduler view_task MySchedule "Design Phase"
@@ -235,35 +224,31 @@ python -m pytest tests/ -v
 
 The Docker image includes:
 
-Pre-configured Python environment
+- Pre-configured Python environment
 
-Automatic dependency installation
+- Automatic dependency installation
 
-Persistent data storage
+- Persistent data storage
 
-Built-in test execution
+- Built-in test execution
 
 To mount local data directory:
+```bash
+docker run -v $(pwd)/data:/app/data -it task-scheduler
+```
 
 To build the docker image run:
 ```bash
 docker build -t task-scheduler .
 ```
 
-```bash
-docker run -v $(pwd)/data:/app/data -it task-scheduler
-```
-
 
 ## Requirements
 
-Python 3.7+
-
-colorama
-
-urwid
-
-pytest (for testing)
+- Python 3.7+
+- colorama
+- urwid
+- pytest (for testing)
 
 
 ## Remarks and Recommendations for Users
