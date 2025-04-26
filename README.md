@@ -272,11 +272,19 @@ pytest (for testing)
 
 - a colorful terminal application is required to get color-coded outputs in terminal
 
+- using the **viwe_next** command is the fastest way to view details about the next scheduled task
+
 - each scheduler instance stores two data files: schedule_state.json (storing all information input by the user), schedule.json (storing the result of the latest scheduling).
-  - rescheduling happens automatically after all kinds of edits and operations, not upon calling the command **view_schedule** however! This commands loads directly the schedule.json file, thus removing the need of schedule recalculation in series of view_schedule calls
+  - rescheduling happens automatically after all kinds of edits and operations, not upon calling the command **view_schedule** or **view_next** however! This commands loads directly the schedule.json file, thus removing the need of schedule recalculation in series of view_schedule calls
   - you can use the command **schedule_tasks** to recalculate your schedule - this command also lists impossible-to-schedule tasks in the terminal assuming your current settings
 
-- it may be a good idea to occasionally save a version of your scheduler. For this purpose the command **merge** can be used. Example: ``` task-scheduler merge -n MySchedule_backup -ns MySchedule ``` 
+- it may be a good idea to occasionally save a version of your scheduler. For this purpose the command **merge** can be used. Example: ``` task-scheduler merge -n MySchedule_backup -ns MySchedule ```
+  
+- note that the order in which subtasks are added to a task is respected in scheduling. This is useful in situations when subtasks rely on completion of previous subtasks
+
+- it only has an effect to edit completion/duration attributes of leaf tasks (tasks with 0 subtasks) since these attributes of tasks higher in the hierarchy are calculated based on those of the leaf tasks
+
+- conversely, it only has an effect to edit deadlines of top-level tasks (highest in the task hierarchy). Deadlines of the rest of the tasks always corresponds to that of their ancestor
 
 - this application requires that **vim** be installed on your system. In certain scenarios, vim motions can be more efficient than editing your settings through **interactive mode** eg. adding multipe time slots. You can use the command **update_time_slots** to edit/add/remove your time slots using the vim interface.
 
