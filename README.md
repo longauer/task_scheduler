@@ -270,7 +270,7 @@ pytest (for testing)
 
 ## Remarks and Recommendations for Users
 
-- using the **viwe_next** command is the fastest way to view details about the next scheduled task
+- using the **view_next** command is the fastest way to view details about the next scheduled task
 
 - each scheduler instance stores two data files: schedule_state.json (storing all information input by the user), schedule.json (storing the result of the latest scheduling).
   - rescheduling happens automatically after all kinds of edits and operations, not upon calling the command **view_schedule** or **view_next** however! This commands loads directly the schedule.json file, thus removing the need of schedule recalculation in series of view_schedule calls
