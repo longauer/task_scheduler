@@ -270,8 +270,6 @@ pytest (for testing)
 
 ## Remarks and Recommendations for Users
 
-- a colorful terminal application is required to get color-coded outputs in terminal
-
 - using the **viwe_next** command is the fastest way to view details about the next scheduled task
 
 - each scheduler instance stores two data files: schedule_state.json (storing all information input by the user), schedule.json (storing the result of the latest scheduling).
@@ -287,6 +285,8 @@ pytest (for testing)
 - conversely, it only has an effect to edit deadlines of top-level tasks (highest in the task hierarchy). Deadlines of the rest of the tasks always corresponds to that of their ancestor
 
 - this application requires that **vim** be installed on your system. In certain scenarios, vim motions can be more efficient than editing your settings through **interactive mode** eg. adding multipe time slots. You can use the command **update_time_slots** to edit/add/remove your time slots using the vim interface.
+
+- a colorful terminal application is required to get color-coded outputs in terminal
 
 - the application was so far tuned mainly for Unix-based operating systems (it works in windows as well but operations in the **interactive mode** are recommended to be carried out mainly by mouse clicks)
 
