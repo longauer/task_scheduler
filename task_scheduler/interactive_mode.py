@@ -422,10 +422,8 @@ class InteractiveApp:
         # Format current value for display
         if field == "deadline" and current_value:
             edit_text = current_value.isoformat(sep=" ", timespec="minutes")
-            self.refresh_view()
         elif field == "completion":
             edit_text = str(int(current_value)
-            self.refresh_view()
         elif field == "description":
             # Windows-compatible edit handler
 
@@ -481,6 +479,8 @@ class InteractiveApp:
             align='center', width=('relative', 25),
             valign='middle', height=('relative', 25)
         )
+
+        self.refresh_view(maintain_focus=True)
 
     def save_task_edit(self, task: Task, field: str, value: str):
         """Validate and save edited field"""
