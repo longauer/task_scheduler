@@ -422,8 +422,10 @@ class InteractiveApp:
         # Format current value for display
         if field == "deadline" and current_value:
             edit_text = current_value.isoformat(sep=" ", timespec="minutes")
+            self.refresh_view()
         elif field == "completion":
-            edit_text = str(int(current_value))
+            edit_text = str(int(current_value)
+            self.refresh_view()
         elif field == "description":
             # Windows-compatible edit handler
 
