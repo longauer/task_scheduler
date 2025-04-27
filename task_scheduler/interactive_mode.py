@@ -423,7 +423,7 @@ class InteractiveApp:
         if field == "deadline" and current_value:
             edit_text = current_value.isoformat(sep=" ", timespec="minutes")
         elif field == "completion":
-            edit_text = str(int(current_value)
+            edit_text = str(int(current_value))
         elif field == "description":
             # Windows-compatible edit handler
 
