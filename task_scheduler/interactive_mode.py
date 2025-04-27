@@ -480,8 +480,6 @@ class InteractiveApp:
             valign='middle', height=('relative', 25)
         )
 
-        self.refresh_view(maintain_focus=True)
-
     def save_task_edit(self, task: Task, field: str, value: str):
         """Validate and save edited field"""
         try:
@@ -512,7 +510,8 @@ class InteractiveApp:
                     raise ValueError("Completion must be 0-100")
                 task.completion = completion
 
-            # Save changes
+            # Save changes (and resort the tasks of the scheduler)
+            self.scheduler.tasks.sort(key=lambda task: task.deadline)
             self.scheduler.save_schedule()
             self.refresh_view(maintain_focus=True)
 
