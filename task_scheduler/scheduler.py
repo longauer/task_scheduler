@@ -122,7 +122,7 @@ class TaskScheduler:
         ## filter out the tasks with unset duration
         lowest_level_tasks = list(filter(lambda task: task.duration != 0, lowest_level_tasks))
 
-        ## keep adding tasks to free time_slots until possible (while continuously checking for deadlines and tiem left available for the current clot)
+        ## keep adding tasks to free time_slots until possible (while continuously checking for deadlines and time left available for the current slot)
 
         impossible_to_schedule = list()
         scheduling_result = dict()  ## task.name -> time_slot
