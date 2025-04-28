@@ -53,16 +53,6 @@ def time_slot_covering(timeslots: List[TimeSlot]) -> List[TimeSlot]:
     return result_slots
 
 
-import datetime
-from task_scheduler.time_slot import TimeSlot
-from typing import List, Dict, Any
-import subprocess
-from task_scheduler.task import Task
-import tempfile
-import os
-import sys
-
-
 ## returning remaining time till deadline in seconds
 def time_till_deadline(task: Task) -> int:
     time_now = datetime.datetime.now()
