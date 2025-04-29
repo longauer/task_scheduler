@@ -17,7 +17,7 @@ class TimeSlot:
     Maintains chronological sorting through rich comparison operators.
     """
 
-    def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
+    def __init__(self, start_time: datetime, end_time: datetime):
         """! @brief Initialize TimeSlot instance
         
         @param start_time Start datetime of the time slot
