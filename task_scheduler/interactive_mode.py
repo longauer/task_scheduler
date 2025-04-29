@@ -1,3 +1,11 @@
+"""! @file interactive.py
+@brief Interactive terminal-based UI for task management
+@author Samuel Longauer
+
+@defgroup interactive Interactive Application
+@brief Provides terminal UI for managing tasks and time slots using urwid
+"""
+
 import urwid
 from task_scheduler.scheduler import TaskScheduler
 from task_scheduler.utils import vim_edit
@@ -9,7 +17,18 @@ import sys
 
 
 class InteractiveApp:
+    """! @brief Main application class for interactive terminal UI
+    
+    @ingroup interactive
+    
+    Handles all UI components and user interactions for managing tasks and time slots.
+    """
+
     def __init__(self, scheduler_name):
+        """! @brief Initialize the interactive application
+        
+        @param scheduler_name Name of the scheduler to load/create
+        """
         self.scheduler_name = scheduler_name
         self.scheduler = self.load_scheduler(scheduler_name)
         self.main_loop = None
@@ -73,7 +92,13 @@ class InteractiveApp:
         self.refresh_view()
 
     def load_scheduler(self, name):
-        """Load scheduler with proper error handling"""
+        """! @brief Load scheduler with proper error handling
+        
+        @param name Name of the scheduler to load
+        @return Initialized TaskScheduler instance
+        @exception FileNotFoundError If scheduler data files are missing
+        @exception Exception Propagates any loading errors
+        """
         try:
             scheduler = TaskScheduler(name)
             scheduler.load_scheduler()
@@ -84,7 +109,10 @@ class InteractiveApp:
             sys.exit(1)
 
     def start(self):
-        """Start the main loop with proper initialization"""
+        """! @brief Start the main loop with proper initialization
+        
+        @exception Exception Captures any errors in main loop execution
+        """
         self.main_loop = urwid.MainLoop(
             self.frame,
             palette=self.palette,
@@ -97,13 +125,19 @@ class InteractiveApp:
             sys.exit(1)
 
     def refresh_view(self, maintain_focus=False):
-        """Refresh both task and time slot views"""
+        """! @brief Refresh both task and time slot views
+        
+        @param maintain_focus If True, tries to preserve current focus position
+        """
         self._refresh_tasks(maintain_focus)
         self._refresh_time_slots()
         self.update_focus_indicator()
 
     def _refresh_tasks(self, maintain_focus=False):
-        """Refresh the view while maintaining focus position"""
+        """! @brief Refresh the task view while maintaining focus position
+        
+        @param maintain_focus If True, preserves current task focus position
+        """
         try:
             # Store current focus
             old_focus = None
@@ -151,7 +185,12 @@ class InteractiveApp:
             self.listbox.body = self.body_walker
 
     def _build_task_widgets(self, items, tasks, depth=0):
-        """Build task widgets recursively"""
+        """! @brief Build task widgets recursively
+        
+        @param items List to populate with widgets
+        @param tasks Tasks to display
+        @param depth Current indentation level for hierarchy display
+        """
         for task in tasks:
             prefix = "👉" if (
                     self.move_mode_active and task == self.selected_task_to_move) else "📌" if task == self.selected_task_to_move else "•"
@@ -167,7 +206,10 @@ class InteractiveApp:
                 self._build_task_widgets(items, task.subtasks, depth + 1)
 
     def drop_task(self):
-        """Final working version of task movement"""
+        """! @brief Final working version of task movement
+        
+        Handles the actual task relocation logic after validation
+        """
         focus_widget, _ = self.listbox.get_focus()
         if not (focus_widget and hasattr(focus_widget, 'original_task')):
             self.footer.set_text(("error", "No valid target selected"))
@@ -187,7 +229,12 @@ class InteractiveApp:
         self._finalize_move()
 
     def _validate_move(self, task_to_move, target_task):
-        """Check if move is valid"""
+        """! @brief Check if move is valid
+        
+        @param task_to_move Task being moved
+        @param target_task Proposed new parent task
+        @return True if move is valid, False otherwise
+        """
         if target_task == task_to_move:
             self.footer.set_text(("error", "Cannot move task to itself"))
             return False
@@ -197,8 +244,12 @@ class InteractiveApp:
         return True
 
     def _execute_move(self, task_to_move, target_task):
-        """Perform the actual movement of tasks"""
-
+        """! @brief Perform the actual movement of tasks
+        
+        @param task_to_move Task to relocate
+        @param target_task New parent task
+        @return True if move succeeded, False otherwise
+        """
         ## creating a deepcopy of a task
         task_copy = deepcopy(task_to_move)
 
@@ -216,7 +267,10 @@ class InteractiveApp:
         return True
 
     def _finalize_move(self):
-        """Complete the move operation"""
+        """! @brief Complete the move operation
+        
+        Updates UI state after successful task movement
+        """
         self.move_mode_active = False
         self.selected_task_to_move = None
 
@@ -229,8 +283,11 @@ class InteractiveApp:
             self.refresh_view()
 
     def _remove_task(self, task_to_remove):
-        """Remove task from current position in hierarchy"""
-
+        """! @brief Remove task from current position in hierarchy
+        
+        @param task_to_remove Task to delete
+        @return True if removal succeeded, False otherwise
+        """
         task = self.scheduler.get_task_by_name(task_to_remove.name)
         if task:
             self.scheduler.delete_task(task.name)
@@ -239,7 +296,12 @@ class InteractiveApp:
         return False
 
     def _is_child_of(self, potential_child, potential_parent):
-        """Check if task is already a child of potential parent"""
+        """! @brief Check if task is already a child of potential parent
+        
+        @param potential_child Task to check
+        @param potential_parent Suspected parent task
+        @return True if parent/child relationship exists
+        """
         current = potential_child.parent
         while current:
             if current == potential_parent:
@@ -248,7 +310,10 @@ class InteractiveApp:
         return False
 
     def update_focus_indicator(self):
-        """Update focus highlight using attribute maps"""
+        """! @brief Update focus highlight between panels
+        
+        Visually indicates which panel (tasks/time slots) has current focus
+        """
         # Create fresh attribute maps for both panels
         task_attr = 'reversed' if self.current_focus == 'tasks' else None
         schedule_attr = 'reversed' if self.current_focus == 'time_slots' else None
@@ -275,6 +340,10 @@ class InteractiveApp:
         self.columns.focus_position = 0 if self.current_focus == 'tasks' else 1
 
     def handle_input(self, key):
+        """! @brief Handle global keyboard input
+        
+        @param key Pressed key value
+        """
         if key in ('q', 'Q'):
             sys.exit(0)
         elif key == 'tab':
@@ -302,6 +371,11 @@ class InteractiveApp:
             self.time_slot_listbox.keypress(self.main_loop.screen_size, key)
 
     def on_task_click(self, button, task: Task):
+        """! @brief Handle task selection click
+        
+        @param button Clicked button widget
+        @param task Associated Task object
+        """
         if self.move_mode_active:
             if self.selected_task_to_move is None:
                 # First selection - choose task to move
@@ -321,6 +395,10 @@ class InteractiveApp:
             self.view_task_details(button, task)
 
     def toggle_move_mode(self):
+        """! @brief Toggle task movement mode
+        
+        Enables/disables the interactive task relocation state
+        """
         self.move_mode_active = not self.move_mode_active
         if not self.move_mode_active:
             self.selected_task_to_move = None
@@ -330,13 +408,21 @@ class InteractiveApp:
         self.refresh_view()
 
     def cancel_move(self, button=None):
+        """! @brief Cancel ongoing move operation
+        
+        @param button Optional button reference (default None)
+        """
         self.move_mode_active = False
         self.selected_task_to_move = None
         self.refresh_view()
         self.footer.set_text("Move operation cancelled")
 
     def view_task_details(self, button, task: Task):
-
+        """! @brief Display detailed task view
+        
+        @param button Clicked button widget
+        @param task Task to display details for
+        """
         description = "\n".join(line.strip() for line in str(task.description).splitlines())
 
         details = (
@@ -371,10 +457,18 @@ class InteractiveApp:
         self.main_loop.widget = urwid.Padding(fill, left=2, right=2)
 
     def back_to_main(self, button):
+        """! @brief Return to main view from detail views
+        
+        @param button Clicked button widget
+        """
         self.start()
 
     def edit_task_dialog(self, button, task: Task):
-        """Show task editing options with proper back navigation"""
+        """! @brief Show task editing options with proper back navigation
+        
+        @param button Clicked button widget
+        @param task Task being edited
+        """
         # Store reference to current view
         self.previous_view = self.main_loop.widget
 
@@ -415,8 +509,11 @@ class InteractiveApp:
         )
 
     def edit_task_field(self, task: Task, field: str):
-        """Edit specific task field with validation"""
-
+        """! @brief Edit specific task field with validation
+        
+        @param task Task being modified
+        @param field Field name to edit
+        """
         current_value = getattr(task, field)
 
         # Format current value for display
@@ -481,7 +578,12 @@ class InteractiveApp:
         )
 
     def save_task_edit(self, task: Task, field: str, value: str):
-        """Validate and save edited field"""
+        """! @brief Validate and save edited field
+        
+        @param task Task being modified
+        @param field Field name being edited
+        @param value New field value
+        """
         try:
             # Field-specific validation
             if field == "name":
@@ -519,6 +621,11 @@ class InteractiveApp:
             self.footer.set_text(("error", f"Invalid value: {str(e)}"))
 
     def delete_task(self, button, task: Task):
+        """! @brief Initiate task deletion confirmation
+        
+        @param button Clicked button widget
+        @param task Task to delete
+        """
         # Confirm deletion
         text = urwid.Text(f"Are you sure you want to delete '{task.name}'?")
         yes_button = urwid.Button("Yes", on_press=self.confirm_delete, user_data=task)
@@ -536,7 +643,11 @@ class InteractiveApp:
         self.refresh_view(maintain_focus=True)
 
     def completed_task(self, button, task: Task):
-
+        """! @brief Mark task as completed
+        
+        @param button Clicked button widget
+        @param task Task to mark complete
+        """
         task = self.scheduler.get_task_by_name(task.name)
         if not task.parent:
             self.scheduler.delete_task(task.name)
@@ -549,6 +660,11 @@ class InteractiveApp:
         self.back_to_main(None)
 
     def confirm_delete(self, button, task: Task):
+        """! @brief Confirm and execute task deletion
+        
+        @param button Clicked button widget
+        @param task Task to delete
+        """
         if self._remove_task(task):
             self.scheduler.schedule_tasks()
             self.scheduler.save_schedule()
@@ -558,6 +674,10 @@ class InteractiveApp:
             self.footer.set_text("Failed to delete task")
 
     def add_new_task(self, button):
+        """! @brief Add new task through Vim-based editor
+        
+        @param button Clicked button widget
+        """
         name = vim_edit("New Task Name")
         description = vim_edit("New Task Description")
         duration_str = vim_edit("Duration in minutes")
@@ -591,7 +711,10 @@ class InteractiveApp:
     # ----------------------------
 
     def _build_time_slot_widgets(self, items):
-        """Build time slot widgets"""
+        """! @brief Build time slot widgets
+        
+        @param items List to populate with time slot widgets
+        """
         for slot in self.scheduler.time_slots:
 
             btn = urwid.Button(
@@ -605,7 +728,7 @@ class InteractiveApp:
             items.append(btn_map)
 
     def _refresh_time_slots(self):
-        """Refresh time slot display"""
+        """! @brief Refresh time slot display"""
         try:
             items = []
             for slot in self.scheduler.time_slots:
@@ -628,7 +751,10 @@ class InteractiveApp:
             self.footer.set_text(("error", f"Time slot error: {str(e)}"))
 
     def add_time_slot_dialog(self, button):
-        """Show time slot creation dialog"""
+        """! @brief Show time slot creation dialog
+        
+        @param button Clicked button widget
+        """
         start_edit = urwid.Edit("Start time (YYYY-MM-DD HH:MM): ")
         end_edit = urwid.Edit("End time (YYYY-MM-DD HH:MM): ")
 
@@ -654,7 +780,10 @@ class InteractiveApp:
         self._show_popup(pile, "New Time Slot")
 
     def do_add_time_slot(self, button):
-        """Create time slot using original interface"""
+        """! @brief Create time slot using original interface
+        
+        @param button Clicked button widget
+        """
         try:
             # Access stored dialog fields
             start_str = self.current_dialog['start_edit'].edit_text
@@ -679,7 +808,11 @@ class InteractiveApp:
             self.footer.set_text(("error", f"Invalid time: {str(e)}"))
 
     def on_time_slot_click(self, button, time_slot):
-        """Handle time slot selection"""
+        """! @brief Handle time slot selection
+        
+        @param button Clicked button widget
+        @param time_slot Selected TimeSlot object
+        """
         if self.move_mode_active:
             # Implement time slot movement logic if needed
             pass
@@ -687,7 +820,11 @@ class InteractiveApp:
             self.view_time_slot_details(button, time_slot)
 
     def view_time_slot_details(self, button, time_slot):
-        """Show time slot details popup"""
+        """! @brief Show time slot details popup
+        
+        @param button Clicked button widget
+        @param time_slot TimeSlot to display
+        """
         details = f"""
 Start: {time_slot.start_time.strftime('%Y-%m-%d %H:%M')}
 End: {time_slot.end_time.strftime('%Y-%m-%d %H:%M')}
@@ -709,7 +846,10 @@ Duration: {time_slot.duration()} hours
         self._show_popup(pile, "Time Slot Details")
 
     def edit_time_slot(self, time_slot):
-        """Edit an existing time slot"""
+        """! @brief Edit an existing time slot
+        
+        @param time_slot TimeSlot to edit
+        """
         # Store reference to the original time slot
         self._original_time_slot = time_slot
 
@@ -741,7 +881,10 @@ Duration: {time_slot.duration()} hours
         self._show_popup(pile, "Edit Time Slot")
 
     def _do_edit_time_slot(self, button):
-        """Handle the actual editing logic"""
+        """! @brief Handle the actual editing logic
+        
+        @param button Clicked button widget
+        """
         try:
             # Get input values
             start_str = self.current_dialog['start_edit'].edit_text
@@ -778,14 +921,21 @@ Duration: {time_slot.duration()} hours
             self._original_time_slot = None
 
     def delete_time_slot(self, time_slot):
-        """Delete selected time slot"""
+        """! @brief Delete selected time slot
+        
+        @param time_slot TimeSlot to delete
+        """
         self.scheduler.time_slots.remove(time_slot)
         self.scheduler.save_schedule()
         self.refresh_view()
         self.back_to_main(None)
 
     def _show_popup(self, widget, title):
-        """Helper to show popup dialogs"""
+        """! @brief Helper to show popup dialogs
+        
+        @param widget Content widget to display
+        @param title Popup window title
+        """
         popup = urwid.LineBox(urwid.Filler(widget), title=title)
         overlay = urwid.Overlay(popup, self.columns,
                                 align='center', width=('relative', 80),
@@ -794,7 +944,11 @@ Duration: {time_slot.duration()} hours
 
 
 def run_interactive_mode(scheduler_name: str):
-    """Run the interactive mode with proper error handling"""
+    """! @brief Run the interactive mode with proper error handling
+    
+    @param scheduler_name Name of the scheduler to use
+    @exception Exception Captures any errors during application startup
+    """
     try:
         app = InteractiveApp(scheduler_name)
         app.start()
@@ -810,4 +964,3 @@ def run_interactive_mode(scheduler_name: str):
             scheduler.save_schedule()
         except FileNotFoundError:
             sys.exit(1)
-

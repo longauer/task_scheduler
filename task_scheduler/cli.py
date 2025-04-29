@@ -1,3 +1,11 @@
+"""! @file cli.py
+@brief Command-line interface for task scheduling system
+@author Samuel Longauer
+
+@defgroup cli CLI Module
+@brief Command processing and argument parsing infrastructure
+"""
+
 import argparse
 import json
 import datetime
@@ -14,16 +22,28 @@ from task_scheduler.storage import Storage
 
 from task_scheduler.interactive_mode import run_interactive_mode
 
+
 class CommandProcessor:
+    """! @brief Handles command execution and scheduler operations
+    
+    @ingroup cli
+    
+    Provides static methods for all supported operations with proper error handling
+    and integration with other system components.
+    """
 
     @staticmethod
     def save_scheduler(scheduler: TaskScheduler):
-
+        """! @brief Persist scheduler state to storage
+        @param scheduler TaskScheduler instance to save
+        """
         scheduler.save_schedule()
 
     @staticmethod
     def create_scheduler(name):
-        """Create a new TaskScheduler instance"""
+        """! @brief Create new scheduler instance
+        @param name Unique identifier for the new scheduler
+        """
 
         ## scheduler construction
         scheduler = TaskScheduler(name)
@@ -35,7 +55,10 @@ class CommandProcessor:
 
     @staticmethod
     def delete_scheduler(name):
-        """ Delete a TaskScheduler instance """
+        """! @brief Permanently remove scheduler
+        @param name Identifier of scheduler to delete
+        @warning This action cannot be undone
+        """
 
         TaskScheduler.delete_schedule(name)
 
@@ -43,7 +66,13 @@ class CommandProcessor:
 
     @staticmethod
     def load_scheduler(scheduler_name, load_schedule=False) -> TaskScheduler:
-        """Initialize TaskScheduler from a JSON file"""
+        """! @brief Initialize scheduler from persistent storage
+        @param scheduler_name Name of scheduler to load
+        @param load_schedule Whether to load schedule assignments
+        @return Initialized TaskScheduler instance
+        @exception FileNotFoundError If scheduler data is missing
+        @exception json.JSONDecodeError If corrupted configuration
+        """
 
         scheduler = TaskScheduler(scheduler_name)
 
@@ -69,14 +98,21 @@ class CommandProcessor:
 
     @staticmethod
     def merge_schedulers(new_schedule_name, *args):
-        """ Merge one or more TaskSchedulers to one """
+        """! @brief Combine multiple schedulers into one
+        @param new_schedule_name Name for merged scheduler
+        @param args Names of schedulers to merge
+        """
 
         TaskScheduler.merge_schedules(new_schedule_name, *args)
         print(f"Schedulers: {', '.join([s for s in args])} were merged to {new_schedule_name}.")
 
     @staticmethod
     def add_time_slot(scheduler_name, start_time, end_time):
-        """Add a time slot to the TaskScheduler"""
+        """! @brief Add a time slot to the TaskScheduler
+        @param scheduler_name Target scheduler name
+        @param start_time ISO-format start datetime
+        @param end_time ISO-format end datetime
+        """
 
         ## start_time and end_time are in isoformat
 
@@ -97,7 +133,10 @@ class CommandProcessor:
 
     @staticmethod
     def update_time_slots(scheduler_name):
-        """ Display current time slots allowing editing """
+        """! @brief Update all time slots by editing a temporary JSON file
+        @param scheduler_name Scheduler to modify
+        @details Launches Vim editor with current time slots in JSON format
+        """
 
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
 
@@ -124,7 +163,10 @@ class CommandProcessor:
 
     @staticmethod
     def delete_time_slot(scheduler_name, start_time, end_time):
-        """ Delete a time slot from the TaskScheduler """
+        """! @brief Delete a time slot from the TaskScheduler
+        @param scheduler_name Scheduler to remove time_slot from
+        @warning This action cannot be undone
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
@@ -143,7 +185,15 @@ class CommandProcessor:
 
     @staticmethod
     def add_task(scheduler_name, name, deadline=None, description=None, duration=None):
-        """Add a task to the TaskScheduler"""
+        """! @brief Add a new task to the TaskScheduler
+        @param scheduler_name Identifier of the scheduler to add a task to
+        @param name Unique identifier of the task
+        @param deadline ISO-format deadline datetime
+        @param description Description of the task
+        @param duration Duration of the task in minutes
+        @details Launches Vim editor for editing of name/deadline/description if the value of the parameter is set to "MISSING
+        Performs rescheduling after the task is added"
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
@@ -173,7 +223,11 @@ class CommandProcessor:
 
     @staticmethod
     def delete_task(scheduler_name, task_name):
-        """ Delete a task from the TaskScheduler"""
+        """! @brief Delete a task from the TaskScheduler
+        @param scheduler_name Identifier of the scheduler to remove task from
+        @param task_name Unique identifier of the task
+        @details Performs rescheduling after the task is deleted
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
@@ -191,7 +245,14 @@ class CommandProcessor:
 
     @staticmethod
     def divide_task(scheduler_name, original_task_name, name, description=None, duration=None):
-        """Divide a task"""
+        """! @brief Divide a task into subtasks
+        @param scheduler_name Identifier of the scheduler to subdivide a task in
+        @param original_task_name Unique identifier of the task
+        @param name Unique identifier of the subtask
+        @param description Description of the subtask
+        @param duration Duration of the subtask in minutes
+        @details Performs rescheduling after the task is deleted
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
@@ -232,7 +293,16 @@ class CommandProcessor:
 
     @staticmethod
     def update_task(scheduler_name, task_name, name=None, description=None, duration=None, deadline=None, completion=None):
-        """ Update a task's name/description/duration/completion/deadline """
+        """! @brief Update the details of an existing task
+        @param scheduler_name Identifier of the scheduler to update task attributes
+        @param task_name Unique identifier of the task to update
+        @param name New Unique identifier of the task
+        @param description New description of the task
+        @param duration New duration of the task
+        @param deadline New deadline of the task in ISO-format
+        @param completion New completion of the task in %
+        @details Performs rescheduling after the task is updated and launches Vim editor if name/description/duration is set to "MISSING"
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
@@ -289,7 +359,11 @@ class CommandProcessor:
 
     @staticmethod
     def completed_task(scheduler_name, task_name):
-        """ Updating the task's status as completed """
+        """! @brief Marks a task as completed
+        @param scheduler_name Identifier of the scheduler to mark a task as completed
+        @param task_name Unique identifier of the task to mark as completed
+        @details Performs rescheduling after the task is updated and launches Vim editor if name/description/duration is set to "MISSING"
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
@@ -313,7 +387,10 @@ class CommandProcessor:
 
     @staticmethod
     def schedule_tasks(scheduler_name, show_unscheduled=False):
-        """ Assigning the tasks to the time slots """
+        """! @brief Assigns lowest-level subtasks to available time-slots
+        @param scheduler_name Identifier of the scheduler to perform scheduling on
+        @param show_unscheduled Flag indicating whether to show impossible-to-schedule tasks
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
@@ -326,7 +403,9 @@ class CommandProcessor:
 
     @staticmethod
     def view_next_task(scheduler_name):
-        """View the next scheduled task"""
+        """! @brief View the next task scheduled to be completed
+        @param scheduler_name Identifier of the scheduler to show the next scheduled task of
+        """
 
         ## loading the scheduler and the schedule
         scheduler = CommandProcessor.load_scheduler(scheduler_name, load_schedule=True)
@@ -338,7 +417,12 @@ class CommandProcessor:
 
     @staticmethod
     def view_common_deadline(scheduler_name, year=None, month=None, day=None):
-        """View task names sharing common deadline"""
+        """! @brief View details of all tasks sharing a common deadline
+        @param scheduler_name Identifier of the scheduler to search
+        @param year Year of the deadline
+        @param month Month of the deadline
+        @param day Day of the deadline
+        """
 
         now = datetime.datetime.now()
         year = year or now.year
@@ -354,10 +438,11 @@ class CommandProcessor:
 
         Visualisation.plot_common_deadline(matching_tasks, datetime.date(year, month, day))
 
-
     @staticmethod
     def view_schedule(scheduler_name):
-        """view the schedule"""
+        """! @brief View the entire schedule of the tasks as well as the completion of all tasks
+        @param scheduler_name Identifier of the scheduler
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name, load_schedule=True)
@@ -366,7 +451,11 @@ class CommandProcessor:
 
     @staticmethod
     def view_calendar(scheduler_name, year, month):
-        """ View the calendar """
+        """! @brief View the number of tasks with deadline on each given day ass well as the total calculated completion for the day
+        @param scheduler_name Identifier of the scheduler
+        @param year Year of the deadline
+        @param month Month of the deadline
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name, load_schedule=True)
@@ -375,7 +464,11 @@ class CommandProcessor:
 
     @staticmethod
     def view_gantt(scheduler_name):
-        """View the schedule in the gantt view"""
+        """! @brief View the Gantt chart representation of the schedule
+        @param scheduler_name Identifier of the scheduler
+        @param year Year of the deadline
+        @param month Month of the deadline
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name, load_schedule=True)
@@ -387,7 +480,10 @@ class CommandProcessor:
 
     @staticmethod
     def view_task(scheduler_name, task_name):
-        """View the task instance details """
+        """! @brief View detailed information about a specific task
+        @param scheduler_name Identifier of the scheduler
+        @param task_name Identifier of the task
+        """
 
         ## loading the scheduler and the schedule
         scheduler = CommandProcessor.load_scheduler(scheduler_name, load_schedule=True)
@@ -407,15 +503,17 @@ class CommandProcessor:
 
     @staticmethod
     def view_dead(scheduler_name):
-        """View tasks past their respective deadlines"""
+        """! @brief View tasks that have passed their deadlines
+        @param scheduler_name Identifier of the scheduler
+        @param task_name Identifier of the task
+        """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
 
         Visualisation.plot_dead_tasks(scheduler)
 
-
-# Dictionary mapping commands to functions
+# Dictionary mapping commands to processor methods
 COMMANDS = {
     "create": lambda args: CommandProcessor.create_scheduler(args.name),
     "wipe": lambda args: CommandProcessor.delete_scheduler(args.name),
@@ -441,8 +539,10 @@ COMMANDS = {
 }
 
 
-# Main function to set up CLI
 def parse_args():
+    """! @brief Configure and parse command-line arguments
+    @details Sets up argparse structure with all supported subcommands
+    """
     parser = argparse.ArgumentParser(prog='task_scheduler')
     subparsers = parser.add_subparsers(title='Operations', dest='command')
 
