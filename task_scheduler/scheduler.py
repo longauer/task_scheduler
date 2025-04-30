@@ -25,16 +25,17 @@ import sys
 
 class TaskScheduler:
     """! @brief Main task scheduling system
+    @details Uses @ref Task objects with @ref TimeSlot allocations. Manages time slots, tasks, and their assignments using greedy scheduling algorithm.
     
     @ingroup scheduler
     
-    Manages time slots, tasks, and their assignments using greedy scheduling algorithm
+
     """
 
     def __init__(self, schedule_name):
         """! @brief Initialize TaskScheduler instance
         
-        @param schedule_name Name identifier for the schedule
+        @param schedule_name (str) Name identifier for the schedule
         """
         self.schedule_name = schedule_name
         self.time_slots = list()  ##< Sorted list of TimeSlot objects
@@ -44,7 +45,6 @@ class TaskScheduler:
 
     def add_time_slot(self, time_slot):
         """! @brief Add time slot to scheduler
-        
         @param time_slot TimeSlot object to add
         @note Maintains sorted order using bisect.insort
         """
@@ -52,8 +52,8 @@ class TaskScheduler:
 
     def delete_time_slot(self, time_slot):
         """! @brief Remove time slot from scheduler
-        
         @param time_slot TimeSlot object to remove
+        @exception ValueError If time_slot not found
         """
         self.time_slots.remove(time_slot)
 
@@ -69,6 +69,7 @@ class TaskScheduler:
         
         @param task Task object to add
         @note Maintains sorted order by deadline using bisect.insort
+        @see delete_task
         """
         bisect.insort(self.tasks, task)
 
@@ -77,6 +78,7 @@ class TaskScheduler:
         
         @param task_name Name of task to remove
         @exception SystemExit If task not found with close match suggestions
+        @see add_task
         """
         task = self.get_task_by_name(task_name)
         if not task:
@@ -97,7 +99,6 @@ class TaskScheduler:
 
     def get_task_by_name(self, name):
         """! @brief Find task by name in hierarchy
-        
         @param name Task name to search for
         @return Task object if found, None otherwise
         """
@@ -106,7 +107,7 @@ class TaskScheduler:
     def schedule_tasks(self, show_unscheduled=False):
         """! @brief Core scheduling algorithm
         
-        @param show_unscheduled Whether to print unschedulable tasks
+        @param show_unscheduled (bool) Whether to print unschedulable tasks
         @details Uses greedy algorithm to assign lowest-level tasks to time slots
         """
         ## always scheduling as far ahead as possible (until we run out of either time_slots or tasks)
@@ -244,7 +245,7 @@ class TaskScheduler:
                  "tasks": list(apply_to_dict(self.scheduled_tasks[key]))} for key in self.scheduled_tasks.keys()]
 
     def save_schedule(self):
-        """! @brief Persist schedule to storage"""
+        """! @brief Saves to JSON files in data/{schedule_name}"""
         script_dir = Path(__file__).parent
 
         path = script_dir / "../data" / self.schedule_name
