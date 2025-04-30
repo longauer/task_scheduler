@@ -209,7 +209,7 @@ class CommandProcessor:
             description = vim_extract()
 
         ## parsing deadline
-        if '+' in deadline:
+        if deadline and '+' in deadline:
             deadline = parse_relative_date(deadline)
         else:
             deadline = None if not deadline else datetime.datetime.fromisoformat(deadline)
