@@ -93,11 +93,11 @@ task-scheduler divide_task MySchedule MyTask\
 task-scheduler schedule_tasks MySchedule
 
 #### View visualizations
-task-scheduler view_gantt MySchedule
-task-scheduler view_calendar MySchedule --month 3
-task-scheduler view_schedule MySchedule
-task-scheduler view_dead MySchedule
-task-scheduler view_next MySchedule
+task-scheduler view_gantt MySchedule \
+task-scheduler view_calendar MySchedule --month 3 \
+task-scheduler view_schedule MySchedule \
+task-scheduler view_dead MySchedule \
+task-scheduler view_next MySchedule \
 task-scheduler view_task MySchedule <task-name>
 
 
