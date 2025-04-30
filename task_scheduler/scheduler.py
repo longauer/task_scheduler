@@ -376,7 +376,7 @@ class TaskScheduler:
             scheduler.load_scheduler()
 
         ## collect tasks and slots
-        joint_tasks = [task for scheduler in schedulers for task in scheduler.tasks]
+        joint_tasks = set([task for scheduler in schedulers for task in scheduler.tasks])
         joint_time_slots = [time_slot for scheduler in schedulers for time_slot in scheduler.time_slots]
 
         result_scheduler = TaskScheduler(new_schedule_name)
