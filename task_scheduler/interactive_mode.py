@@ -8,7 +8,7 @@
 
 import urwid
 from task_scheduler.scheduler import TaskScheduler
-from task_scheduler.utils import vim_edit
+from task_scheduler.utils import vim_edit, parse_relative_date
 from task_scheduler.task import Task
 from task_scheduler.time_slot import TimeSlot
 from copy import copy, deepcopy
@@ -604,7 +604,12 @@ class InteractiveApp:
                 if value.lower() == "none":
                     task.deadline = None
                 else:
-                    task.deadline = datetime.datetime.fromisoformat(value)
+                    if '+' in value:
+                        task.deadline = parse_relative_date(value)
+                    elif value == '':
+                        task.deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59")
+                    else:
+                        task.deadline = datetime.datetime.fromisoformat(value)
 
             elif field == "completion":
                 completion = int(value)
@@ -684,8 +689,13 @@ class InteractiveApp:
         deadline_str = vim_edit("Deadline (YYYY-MM-DDTHH:MM)")
 
         try:
-            dt = datetime.datetime.fromisoformat(deadline_str.strip())
-            deadline_str = dt
+            deadline_str = deadline_str.strip()
+            if '+' in deadline_str:
+                deadline_str = parse_relative_date(deadline_str)
+            elif deadline_str == '':
+                deadline_str = datetime.datetime.fromisoformat("9999-12-31T23:59:59")
+            else:
+                deadline_str = datetime.datetime.fromisoformat(deadline_str)
         except ValueError:
             deadline_str = None
 
@@ -793,8 +803,8 @@ class InteractiveApp:
             # self.current_dialog = None
 
             # Parse and create time slot
-            start_time = datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
-            end_time = datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+            start_time = parse_relative_date(start_str) if '+' in start_str else datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
+            end_time = parse_relative_date(end_str) if '+' in end_str else datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
 
             new_slot = TimeSlot(start_time, end_time)
             self.scheduler.add_time_slot(new_slot)
@@ -894,8 +904,9 @@ Duration: {time_slot.duration()} hours
             self.current_dialog = None
 
             # Parse datetime values
-            new_start = datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
-            new_end = datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+
+            new_start = parse_relative_date(start_str) if '+' in start_str else datetime.datetime.strptime(start_str, "%Y-%m-%d %H:%M")
+            new_end = parse_relative_date(end_str) if '+' in end_str else datetime.datetime.strptime(end_str, "%Y-%m-%d %H:%M")
 
             # Validate times
             if new_end <= new_start:

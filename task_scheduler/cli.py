@@ -16,7 +16,7 @@ import difflib
 from task_scheduler.scheduler import TaskScheduler
 from task_scheduler.time_slot import TimeSlot
 from task_scheduler.task import Task
-from task_scheduler.utils import vim_extract, vim_edit, open_with_vim
+from task_scheduler.utils import vim_extract, vim_edit, open_with_vim, parse_relative_date
 from task_scheduler.visualisation import Visualisation
 from task_scheduler.storage import Storage
 
@@ -208,8 +208,14 @@ class CommandProcessor:
         if description == "MISSING":
             description = vim_extract()
 
+        ## parsing deadline
+        if '+' in deadline:
+            deadline = parse_relative_date(deadline)
+        else:
+            deadline = None if not deadline else datetime.datetime.fromisoformat(deadline)
+
         ## construting the Task object
-        task = Task(name=name, description=description, duration=duration, deadline= None if not deadline else datetime.datetime.fromisoformat(deadline))
+        task = Task(name=name, description=description, duration=duration, deadline= deadline)
 
         scheduler.add_task(task)
 
@@ -343,7 +349,12 @@ class CommandProcessor:
 
         if deadline != None:
 
-            task.deadline = datetime.datetime.fromisoformat(deadline)
+            if '+' in deadline:
+                task.deadline = parse_relative_date(deadline)
+            elif deadline == '':
+                task.deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59")
+            else:
+                task.deadline = datetime.datetime.fromisoformat(deadline)
 
         if completion != None:
 
