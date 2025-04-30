@@ -28,7 +28,7 @@ cd task_scheduler
 pip install -e .
 ```
 
-- package is also availabole at PyPI under the name task-scheduler-x
+- package is also available at PyPI under the name task-scheduler-x
 - it can be installed using
 
 ```bash
@@ -55,20 +55,39 @@ docker run -it task-scheduler view_schedule MySchedule
 
 ### CLI Commands
 
-#### Create new scheduler
+#### Create a new scheduler
 task-scheduler create --name MySchedule
+
+#### Delete a scheduler
+task-scheduler wipe MyScheduler
+
+#### Merge schedulers
+task-scheduler merge --name MergedSchedule --names Schedule1 Schedule2 Schedule3
 
 #### Add time slot
 task-scheduler add_time_slot MySchedule \
   --start_time 2024-03-01T09:00 \
   --end_time 2024-03-01T11:00
 
-#### Add task with subtasks
+#### Add a new task
 task-scheduler add_task MySchedule \
   --name "Project X" \
   --description "Main project" \
   --duration 300 \
   --deadline 2024-03-15T17:00
+
+#### Update a task
+task-scheduler update_task MySchedule  \
+  --name NewTaskName \
+  --description "new description" \
+  --duration 50 \
+  --deadline 2025-04-30T18:00
+
+#### Subdivide a task
+task-scheduler divide_task MySchedule MyTask\
+  --name subtask \
+  --description "Subtask Y"
+  --duration 100
 
 #### Generate schedule
 task-scheduler schedule_tasks MySchedule
@@ -76,7 +95,10 @@ task-scheduler schedule_tasks MySchedule
 #### View visualizations
 task-scheduler view_gantt MySchedule
 task-scheduler view_calendar MySchedule --month 3
-
+task-scheduler view_schedule MySchedule
+task-scheduler view_dead MySchedule
+task-scheduler view_next MySchedule
+task-scheduler view_task MySchedule <task-name>
 
 
 ## Interactive Mode
@@ -101,9 +123,6 @@ task-scheduler interactive MySchedule
 - Drag-and-drop reorganization
 - Real-time progress updates
 - Color-coded deadlines
-
-
-
 
 
 ### Controls:
@@ -148,14 +167,12 @@ Dual-Pane Interface
 - Smart time slot sorting and gap detection
 
 #### Feedback & Safety
-
-- Instant save confirmation toasts
 - Undo/redo stack for critical operations
 
 
 ## Data Format
 
-data format for information fully describing the scheduler instance - JSON
+- data format for information fully describing the scheduler instance - JSON
 
 example:
 ```JSON
@@ -217,21 +234,15 @@ Description: Initial design work
 python -m pytest tests/ -v
 ```
 
-
-
 ## Docker Support
-
 
 The Docker image includes:
 
 - Pre-configured Python environment
-
 - Automatic dependency installation
-
 - Persistent data storage
-
 - Built-in test execution
-
+- 
 To mount local data directory:
 ```bash
 docker run -v $(pwd)/data:/app/data -it task-scheduler
@@ -245,7 +256,7 @@ docker build -t task-scheduler .
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.10+
 - colorama
 - urwid
 - pytest (for testing)
@@ -277,8 +288,6 @@ docker build -t task-scheduler .
 - the application was so far tuned mainly for Unix-based operating systems (it works in windows as well but operations in the **interactive mode** are recommended to be carried out mainly by mouse clicks to avoid lag)
 
 - the pip installs the source files and the JSON data files in two separate directories. Consequently, upon reinstalling the package your data are not deleted from the file system on your machine. If you want to uninstall for good the data files have to be deleted manually - ``` pip -V ``` command can be used to find the path to the package installation. Then look for the data/ directory.
-
-
 
 
 
