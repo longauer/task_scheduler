@@ -8,6 +8,7 @@ A CLI-based task scheduling application with interactive mode and visualization 
 - Define time slots with start/end times
 - Create tasks with deadlines, durations, and descriptions
 - Hierarchical task management with subtasks
+- creating commands for periodic scheduling of tasks
 - Multiple visualization modes:
 - Gantt chart view
 - Calendar view
@@ -23,7 +24,7 @@ A CLI-based task scheduling application with interactive mode and visualization 
 ### Local Installation (pip)
 ```bash
 
-git clone https://github.com/yourusername/task_scheduler.git
+git clone https://github.com/longauer/task_scheduler.git
 cd task_scheduler
 pip install -e .
 ```
@@ -88,6 +89,16 @@ task-scheduler divide_task MySchedule MyTask\
   --name subtask \
   --description "Subtask Y"
   --duration 100
+
+#### Periodic scheduling
+task-scheduler periodic MySchedule MyTask\
+  --week_day monday \
+  --day 12
+  --month 5
+  --year 2025
+
+#### Update commands for periodic scheduling
+task-scheduler update_periodic
 
 #### Generate schedule
 task-scheduler schedule_tasks MySchedule
@@ -270,6 +281,10 @@ docker build -t task-scheduler .
 - each scheduler instance stores two data files: schedule_state.json (storing all information input by the user), schedule.json (storing the result of the latest scheduling).
   - rescheduling happens automatically after all kinds of edits and operations, not upon calling the command **view_schedule** or **view_next** however! This commands loads directly the schedule.json file, thus removing the need of schedule recalculation in series of view_schedule calls
   - you can use the command **schedule_tasks** to recalculate your schedule - this command also lists impossible-to-schedule tasks in the terminal assuming your current settings
+
+- when creating a command for periodic scheduling of a task a mask composed of week_day, day, month and year is used. If any of these components are not specified, they are not matched against the current date.
+
+- when creating or updating a task the deadline can be set relative to the current date. This is the format [today/monday/tuesday/.../sunday]+[0/1/...]. Example: monday+0 (the very next monday)
 
 - it may be a good idea to occasionally save a version of your scheduler. For this purpose the command **merge** can be used. Example: ``` task-scheduler merge -n MySchedule_backup -ns MySchedule ```
   
