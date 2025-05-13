@@ -120,7 +120,7 @@ class TaskScheduler:
 
         ## periodic scheduling
         if schedule_periodic:
-            periodic_tasks = PeriodicScheduler.automatic_scheduling()
+            periodic_tasks = PeriodicScheduler.automatic_scheduling(self.schedule_name)
             for t in periodic_tasks:
                 if all([t.name != g.name for g in self.tasks]):
                     t.deadline = set_time_to_midnight(datetime.datetime.now() + datetime.timedelta(days=1)) ## setting the deadline the same day at midnight

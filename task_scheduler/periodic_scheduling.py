@@ -181,11 +181,11 @@ class PeriodicScheduler:
         return (self.task == other.task) and (self.pattern == other.pattern)
 
     @staticmethod
-    def automatic_scheduling() -> List[Task]:
+    def automatic_scheduling(scheduler_name: str) -> List[Task]:
         """! @brief Get tasks scheduled for automatic execution today
 
         @ingroup scheduler
-
+        @param scheduler_name Name of scheduler subsystem using this pattern
         @return List of tasks matching current date's pattern
         @details Filters periodic tasks using today's date check
         """
@@ -193,7 +193,7 @@ class PeriodicScheduler:
         periodic_schedulers = PeriodicScheduler.from_dict(
             PeriodicScheduler.load_periodic_tasks())
         return [ps.task for ps in periodic_schedulers
-                if ps.pattern.date_match(today)]
+                if ps.pattern.date_match(today) and ps.scheduler == scheduler_name]
 
 
 def main():
