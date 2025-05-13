@@ -448,8 +448,6 @@ class CommandProcessor:
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
 
         task = scheduler.get_task_by_name(task_name)
-        print("the task was found!")
-        print(task)
         pattern = SchedulingPattern(week_day=week_day, day=day, month=month, year=year)
 
         ps = PeriodicScheduler(task, pattern, scheduler_name)
