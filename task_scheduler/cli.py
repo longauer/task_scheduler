@@ -19,6 +19,7 @@ from task_scheduler.task import Task
 from task_scheduler.utils import vim_extract, vim_edit, open_with_vim, parse_relative_date
 from task_scheduler.visualisation import Visualisation
 from task_scheduler.storage import Storage
+from task_scheduler.periodic_scheduling import PeriodicScheduler, SchedulingPattern
 
 from task_scheduler.interactive_mode import run_interactive_mode
 
@@ -160,6 +161,16 @@ class CommandProcessor:
 
         ## saving the schedule
         scheduler.save_schedule()
+
+    @staticmethod
+    def update_periodic():
+
+        script_dir = Path(__file__).parent
+        path = script_dir / "../data"
+        path.mkdir(exist_ok=True, parents=True)
+        path = path.joinpath("periodic_schedule.json")
+
+        open_with_vim(path)
 
     @staticmethod
     def delete_time_slot(scheduler_name, start_time, end_time):
@@ -397,7 +408,7 @@ class CommandProcessor:
             CommandProcessor.update_task(scheduler_name, task_name, description=task.description, duration=task.duration, completion=100)
 
     @staticmethod
-    def schedule_tasks(scheduler_name, show_unscheduled=False):
+    def schedule_tasks(scheduler_name, show_unscheduled=False, schedule_periodic=False):
         """! @brief Assigns lowest-level subtasks to available time-slots
         @param scheduler_name Identifier of the scheduler to perform scheduling on
         @param show_unscheduled Flag indicating whether to show impossible-to-schedule tasks
@@ -407,7 +418,7 @@ class CommandProcessor:
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
 
         ## schedule tasks
-        scheduler.schedule_tasks(show_unscheduled=show_unscheduled)
+        scheduler.schedule_tasks(show_unscheduled=show_unscheduled, schedule_periodic=schedule_periodic)
 
         ## saving the scheduler
         scheduler.save_schedule()
@@ -425,6 +436,25 @@ class CommandProcessor:
         next_task = scheduler.get_next_task()
 
         Visualisation.plot_single_task(scheduler, None if not next_task else next_task.name)
+
+    @staticmethod
+    def periodic_scheduling(scheduler_name, task_name, week_day=None, day=None, month=None, year=None):
+        """! @brief Set periodic scheduling of a task
+        @param scheduler_name Identifier of the scheduler
+        @param year Year in the scheduling pattern
+        @param month Month in the scheduling pattern
+        @param day Day in the scheduling patterin
+        """
+        scheduler = CommandProcessor.load_scheduler(scheduler_name)
+
+        task = scheduler.get_task_by_name(task_name)
+        print("the task was found!")
+        print(task)
+        pattern = SchedulingPattern(week_day=week_day, day=day, month=month, year=year)
+
+        ps = PeriodicScheduler(task, pattern, scheduler_name)
+
+        PeriodicScheduler.save_periodic_tasks([ps])
 
     @staticmethod
     def view_common_deadline(scheduler_name, year=None, month=None, day=None):
@@ -537,7 +567,7 @@ COMMANDS = {
     "delete_task": lambda args: CommandProcessor.delete_task(args.scheduler_name, args.name),
     "update_task": lambda args: CommandProcessor.update_task(args.scheduler_name, args.task_name, args.name, args.description, args.duration, args.deadline, args.completion),
     "divide_task": lambda args: CommandProcessor.divide_task(args.scheduler_name, args.original_task_name, args.name, args.description, args.duration),
-    "schedule_tasks": lambda args: CommandProcessor.schedule_tasks(args.scheduler_name, show_unscheduled=True),
+    "schedule_tasks": lambda args: CommandProcessor.schedule_tasks(args.scheduler_name, show_unscheduled=True, schedule_periodic=True),
     "view_next": lambda args: CommandProcessor.view_next_task(args.scheduler_name),
     "view_schedule": lambda args: CommandProcessor.view_schedule(args.scheduler_name),
     "view_calendar": lambda args: CommandProcessor.view_calendar(args.scheduler_name, args.year, args.month),
@@ -546,7 +576,9 @@ COMMANDS = {
     "view_dead": lambda args: CommandProcessor.view_dead(args.scheduler_name),
     "common_deadline": lambda args: CommandProcessor.view_common_deadline(args.scheduler_name, args.year, args.month, args.day),
     "completed": lambda args: CommandProcessor.completed_task(args.scheduler_name, args.name),
-    "interactive": lambda args: run_interactive_mode(args.scheduler_name)
+    "interactive": lambda args: run_interactive_mode(args.scheduler_name),
+    "periodic": lambda args: CommandProcessor.periodic_scheduling(args.scheduler_name, args.task_name, args.week_day, args.day, args.month, args.year),
+    "update_periodic": lambda args: CommandProcessor.update_periodic()
 }
 
 
@@ -584,11 +616,14 @@ def parse_args():
     update_time_slot_parser = subparsers.add_parser('update_time_slots', help='Update a time slot from the TaskScheduler')
     update_time_slot_parser.add_argument('scheduler_name', help='Name of the scheduler for the time_slot to be updated')
 
-    #Subcommand: delete_time_slot
+    # Subcommand: delete_time_slot
     delete_time_slot_parser = subparsers.add_parser('delete_time_slot', help='Delete a time slot from the TaskScheduler')
     delete_time_slot_parser.add_argument('scheduler_name', help='Name of the scheduler for the time_slot to be deleted')
     delete_time_slot_parser.add_argument('-st', '--start_time', required=True, help='Start time of the time slot')
     delete_time_slot_parser.add_argument('-et', '--end_time', required=True, help='End time of the time slot')
+
+    # Subcommand: update_periodic
+    update_periodic = subparsers.add_parser('update_periodic', help='Update commands for periodic scheduling')
 
     # Subcommand: add_task
     add_task_parser = subparsers.add_parser('add_task', help='Add a task to the TaskScheduler')
@@ -630,6 +665,15 @@ def parse_args():
     # Subcommand: schedule_tasks
     schedule_tasks_parser = subparsers.add_parser('schedule_tasks', help='Schedule tasks')
     schedule_tasks_parser.add_argument('scheduler_name', help='Name of the scheduler to be scheduled')
+
+    # Subcommand: periodic
+    periodic_parser = subparsers.add_parser('periodic', help='Periodic task scheduling')
+    periodic_parser.add_argument('scheduler_name', help='Name of the scheduler to which the periodic task will be scheduled')
+    periodic_parser.add_argument('task_name', help='Name of the task to be scheduled')
+    periodic_parser.add_argument('-w', '--week_day', help='Week day of the task')
+    periodic_parser.add_argument('-d', '--day', type=int, help='Day of the task')
+    periodic_parser.add_argument('-m', '--month', type=int, help='Month of the task')
+    periodic_parser.add_argument('-y', '--year', type=int, help='Year of the task')
 
     # Subcommand: view_next_task
     view_next_task_parser = subparsers.add_parser('view_next', help='View the next scheduled task')

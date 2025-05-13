@@ -8,7 +8,8 @@
 
 import datetime as datetime
 from copy import copy, deepcopy
-from typing import Optional, Iterable
+from typing import Optional, Iterable, List, Dict, Any
+import inspect
 
 class Task:
     """! @brief Hierarchical task structure with deadline propagation
@@ -217,6 +218,52 @@ class Task:
             "completion": self.completion,
             "subtasks": [subtask.to_dict() for subtask in self.subtasks]
         }
+
+    @classmethod
+    def construct_tasks(cls, tasks: List[Dict[str, Any]]) -> List["Task"]:
+        """! @brief Reconstruct task hierarchy from serialized data
+
+        @param tasks List of serialized task dictionaries
+        @return List of reconstructed Task objects
+        """
+        ## filter arguments for initialization of a Task object
+
+        filter_dict = lambda d: {key: value for key, value in d.items() if
+                                 key in inspect.signature(Task.__init__).parameters}
+
+        filter_complement = lambda d: {key: value for key, value in d.items() if
+                                       key not in inspect.signature(Task.__init__).parameters}
+
+        constructed_tasks = list()
+        for task in tasks:
+
+            ## recursively construct the subtasks
+            subtasks = cls.construct_tasks(task["subtasks"])
+
+            ## filter out key-value pairs that are not in the argument list of the Task constructor
+            filtered_arguments = filter_dict(task)
+
+            ## filter out key-value pairs that are in the argument list of the Task constructor
+            argument_list_complement = filter_complement(task)
+
+            ##construct the datetime object from iso format
+            filtered_arguments["deadline"] = datetime.datetime.fromisoformat(filtered_arguments["deadline"])
+
+            new_task = Task(**filtered_arguments)
+
+            ## initializing the rest of the attributes (outside the constructor argument list)
+            for key, value in argument_list_complement.items():
+                setattr(new_task, key, value)
+
+            new_task.subtasks = subtasks
+
+            ## setting parent pointers to all task instances
+            for t in new_task.subtasks:
+                t.parent = new_task
+
+            constructed_tasks.append(new_task)
+
+        return constructed_tasks
 
     def __eq__(self, other):
         """! @brief Equality comparison

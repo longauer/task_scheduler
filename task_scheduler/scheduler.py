@@ -9,7 +9,8 @@
 from task_scheduler.task import Task
 from task_scheduler.time_slot import TimeSlot
 from task_scheduler.storage import Storage
-from task_scheduler.utils import time_slot_covering
+from task_scheduler.periodic_scheduling import PeriodicScheduler
+from task_scheduler.utils import time_slot_covering, set_time_to_midnight
 
 from collections import deque
 from collections import defaultdict
@@ -104,7 +105,7 @@ class TaskScheduler:
         """
         return Task.find_task_by_name(name, self.tasks)
 
-    def schedule_tasks(self, show_unscheduled=False):
+    def schedule_tasks(self, show_unscheduled=False, schedule_periodic=False):
         """! @brief Core scheduling algorithm
         
         @param show_unscheduled (bool) Whether to print unschedulable tasks
@@ -116,6 +117,14 @@ class TaskScheduler:
 
         ## removing all past time_slots
         self.time_slot_management()
+
+        ## periodic scheduling
+        if schedule_periodic:
+            periodic_tasks = PeriodicScheduler.automatic_scheduling()
+            for t in periodic_tasks:
+                if all([t.name != g.name for g in self.tasks]):
+                    t.deadline = set_time_to_midnight(datetime.datetime.now() + datetime.timedelta(days=1)) ## setting the deadline the same day at midnight
+                    self.add_task(t)
 
         ## finding minimal time slot covering
         self.time_slots = time_slot_covering(self.time_slots)
@@ -281,7 +290,7 @@ class TaskScheduler:
         self.time_slots = list(map(lambda time_slot: TimeSlot(datetime.datetime.fromisoformat(time_slot["start_time"]),
                                                               datetime.datetime.fromisoformat(time_slot["end_time"])),
                                    state_json["time_slots"]))
-        self.tasks = self._construct_tasks(state_json["tasks"])
+        self.tasks = Task.construct_tasks(state_json["tasks"])
 
     def load_schedule(self):
         """! @brief Load schedule assignments from storage
@@ -303,52 +312,7 @@ class TaskScheduler:
         for slot in schedule_json:
             self.scheduled_tasks[TimeSlot(datetime.datetime.fromisoformat(slot["start_time"]),
                                           datetime.datetime.fromisoformat(slot["end_time"]))] = deque(
-                self._construct_tasks(slot["tasks"]))
-
-    def _construct_tasks(self, tasks: List[Dict[str, Any]]) -> List[Task]:
-        """! @brief Reconstruct task hierarchy from serialized data
-        
-        @param tasks List of serialized task dictionaries
-        @return List of reconstructed Task objects
-        """
-        ## filter arguments for initialization of a Task object
-
-        filter_dict = lambda d: {key: value for key, value in d.items() if
-                                 key in inspect.signature(Task.__init__).parameters}
-
-        filter_complement = lambda d: {key: value for key, value in d.items() if
-                                       key not in inspect.signature(Task.__init__).parameters}
-
-        constructed_tasks = list()
-        for task in tasks:
-
-            ## recursively construct the subtasks
-            subtasks = self._construct_tasks(task["subtasks"])
-
-            ## filter out key-value pairs that are not in the argument list of the Task constructor
-            filtered_arguments = filter_dict(task)
-
-            ## filter out key-value pairs that are in the argument list of the Task constructor
-            argument_list_complement = filter_complement(task)
-
-            ##construct the datetime object from iso format
-            filtered_arguments["deadline"] = datetime.datetime.fromisoformat(filtered_arguments["deadline"])
-
-            new_task = Task(**filtered_arguments)
-
-            ## initializing the rest of the attributes (outside the constructor argument list)
-            for key, value in argument_list_complement.items():
-                setattr(new_task, key, value)
-
-            new_task.subtasks = subtasks
-
-            ## setting parent pointers to all task instances
-            for t in new_task.subtasks:
-                t.parent = new_task
-
-            constructed_tasks.append(new_task)
-
-        return constructed_tasks
+                Task.construct_tasks(slot["tasks"]))
 
     @staticmethod
     def delete_schedule(schedule_name):
