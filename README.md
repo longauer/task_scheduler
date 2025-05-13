@@ -282,7 +282,7 @@ docker build -t task-scheduler .
   - rescheduling happens automatically after all kinds of edits and operations, not upon calling the command **view_schedule** or **view_next** however! This commands loads directly the schedule.json file, thus removing the need of schedule recalculation in series of view_schedule calls
   - you can use the command **schedule_tasks** to recalculate your schedule - this command also lists impossible-to-schedule tasks in the terminal assuming your current settings
 
-- when creating a command for periodic scheduling of a task a mask composed of week_day, day, month and year is used. If any of these components are not specified, they are not matched against the current date.
+- when creating a command for periodic scheduling of a task a mask composed of week_day, day, month and year is used. If any of these components are not specified, they are not matched against the current date. Command ```schedule_tasks``` must be called to schedule periodic tasks. Note: periodic tasks are scheduled regardless of how recently they were completed.
 
 - when creating or updating a task the deadline can be set relative to the current date. This is the format [today/monday/tuesday/.../sunday]+[0/1/...]. Example: monday+0 (the very next monday)
 
