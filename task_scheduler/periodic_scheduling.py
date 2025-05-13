@@ -113,15 +113,14 @@ class PeriodicScheduler:
         @details Loads existing tasks, adds new entry if unique,
                  then saves updated collection
         """
-        script_dir = Path(__file__).parent
-        path = script_dir / "../data"
-        path.mkdir(exist_ok=True, parents=True)
-        path = path.joinpath("periodic_tasks.json")
 
+        script_dir = Path(__file__).parent
+        path = script_dir / "../data/periodic_schedule.json"
+        path.parent.mkdir(exist_ok=True, parents=True)
         objs = PeriodicScheduler.storage.load(path)
 
-        if self not in objs:
-            objs.append(self)
+        if self.to_dict() not in objs:
+            objs.append(self.to_dict())
 
         PeriodicScheduler.storage.save(path, objs)
 

@@ -452,7 +452,7 @@ class CommandProcessor:
 
         ps = PeriodicScheduler(task, pattern, scheduler_name)
 
-        PeriodicScheduler.save_periodic_tasks([ps])
+        ps.add_task()
 
     @staticmethod
     def view_common_deadline(scheduler_name, year=None, month=None, day=None):
