@@ -34,7 +34,7 @@ class Task:
         self.description = description
         self._deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59") if not deadline else deadline
         self.subtasks = list()  ##< List of child Task objects
-        self._duration = duration
+        self._duration = 0 if not duration else duration
         self._completion = 0  ##< Completion percentage (0-100)
         self.parent = parent  ##< Parent task reference
 

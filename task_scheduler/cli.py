@@ -195,7 +195,7 @@ class CommandProcessor:
         scheduler.save_schedule()
 
     @staticmethod
-    def add_task(scheduler_name, name, deadline=None, description=None, duration=0):
+    def add_task(scheduler_name, name, deadline=None, description=None, duration=None):
         """! @brief Add a new task to the TaskScheduler
         @param scheduler_name Identifier of the scheduler to add a task to
         @param name Unique identifier of the task
@@ -226,7 +226,7 @@ class CommandProcessor:
             deadline = None if not deadline else datetime.datetime.fromisoformat(deadline)
 
         ## construting the Task object
-        task = Task(name=name, description=description, duration=duration, deadline= deadline)
+        task = Task(name=name, description=description, duration=duration, deadline=deadline)
 
         scheduler.add_task(task)
 
