@@ -133,7 +133,7 @@ class TaskScheduler:
         self.tasks = list(filter(lambda task: task.completion < 100, self.tasks))
 
         ## sorting the task list
-        self.tasks.sort(key=lambda task: task.deadline)
+        self.tasks.sort(key=lambda task: (task.priority, task.deadline))
 
         ## first collect all lowest_level tasks
         lowest_level_tasks = [p for task in self.tasks for p in Task.collect_lowest_level_tasks(task)]
@@ -141,7 +141,7 @@ class TaskScheduler:
         ## filter out the completed tasks:
         lowest_level_tasks = list(filter(lambda task: task.completion < 100, lowest_level_tasks))
 
-        ## filter out the tasks with unset duration
+        ## filter out tasks with unset duration
         lowest_level_tasks = list(filter(lambda task: task.duration != 0, lowest_level_tasks))
 
         ## keep adding tasks to free time_slots until possible (while continuously checking for deadlines and time left available for the current slot)
@@ -163,8 +163,9 @@ class TaskScheduler:
 
                 task_root = task.get_root()
 
-                if (task.duration <= available_time) and (
-                        task_root not in scheduling_result or scheduling_result[task_root] <= time_slot):
+                if ((task.duration <= available_time) and
+                        (task_root not in scheduling_result or scheduling_result[task_root] <= time_slot) and
+                        (task.since <= time_slot.start_time)):
 
                     self.scheduled_tasks[time_slot].append(task)
 

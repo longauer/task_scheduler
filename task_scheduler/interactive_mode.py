@@ -477,7 +477,9 @@ class InteractiveApp:
             ("📄 Description", lambda _: self.edit_task_field(task, "description")),
             ("⏱ Duration", lambda _: self.edit_task_field(task, "duration")),
             ("📅 Deadline", lambda _: self.edit_task_field(task, "deadline")),
+            ("📅 Schedule since", lambda _: self.edit_task_field(task, "since")),
             ("✅ Completion", lambda _: self.edit_task_field(task, "completion")),
+            ("❗Priority", lambda _: self.edit_task_field(task, "priority")),
             ("🔙 Back", lambda _: (self.back_to_main, self.view_task_details(None, task)))
         ]
 
@@ -519,7 +521,11 @@ class InteractiveApp:
         # Format current value for display
         if field == "deadline" and current_value:
             edit_text = current_value.isoformat(sep=" ", timespec="minutes")
+        elif field == "since" and current_value:
+            edit_text = current_value.isoformat(sep=" ", timespec="minutes")
         elif field == "completion":
+            edit_text = str(int(current_value))
+        elif field == "priority":
             edit_text = str(int(current_value))
         elif field == "description":
             # Windows-compatible edit handler
@@ -601,21 +607,30 @@ class InteractiveApp:
                 task.duration = duration
 
             elif field == "deadline":
-                if value.lower() == "none":
-                    task.deadline = None
+                if '+' in value:
+                    task.deadline = parse_relative_date(value)
+                elif value == '':
+                    task.deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59")
                 else:
-                    if '+' in value:
-                        task.deadline = parse_relative_date(value)
-                    elif value == '':
-                        task.deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59")
-                    else:
-                        task.deadline = datetime.datetime.fromisoformat(value)
+                    task.deadline = datetime.datetime.fromisoformat(value)
+
+            elif field == "since":
+                if '+' in value:
+                    task.since = parse_relative_date(value)
+                elif value == '':
+                    task.since = datetime.datetime.fromisoformat("0001-01-01T00:00:00")
+                else:
+                    task.since = datetime.datetime.fromisoformat(value)
 
             elif field == "completion":
                 completion = int(value)
                 if not 0 <= completion <= 100:
                     raise ValueError("Completion must be 0-100")
                 task.completion = completion
+
+            elif field == "priority":
+                priority = int(value)
+                task.priority = priority
 
             # Save changes (and resort the tasks of the scheduler)
             self.scheduler.tasks.sort(key=lambda task: task.deadline)

@@ -21,7 +21,7 @@ class Task:
     """
 
     def __init__(self, name, description=None, deadline: datetime = None, 
-                 duration: int = 0, parent: Optional["Task"] = None):
+                 duration: int = 0, parent: Optional["Task"] = None, priority: int = 0, since: datetime = None):
         """! @brief Initialize Task instance
         
         @param name Task name identifier
@@ -33,10 +33,12 @@ class Task:
         self.name = name
         self.description = description
         self._deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59") if not deadline else deadline
+        self._since = datetime.datetime.fromisoformat("0001-01-01T00:00:00") if not since else since
         self.subtasks = list()  ##< List of child Task objects
         self._duration = 0 if not duration else duration
         self._completion = 0  ##< Completion percentage (0-100)
         self.parent = parent  ##< Parent task reference
+        self.priority = priority
 
     @property
     def deadline(self):
@@ -51,8 +53,26 @@ class Task:
         @param value New datetime value for deadline
         """
         self._deadline = value
-        for task in self.subtasks:
-            task.deadline = value
+
+        root = self.get_root()
+        root.__deadline_recalc()
+
+    @property
+    def since(self):
+        """! @brief Time since scheduled - datetime
+        @note Setting propagates to all subtasks
+        """
+        return self._since
+
+    @since.setter
+    def since(self, value):
+        """! @brief Set since and propagate to subtasks
+        @param value New datetime value for since
+        """
+        self._since = value
+
+        root = self.get_root()
+        root.__since_recalc()
 
     @property
     def duration(self):
@@ -97,6 +117,8 @@ class Task:
         new_task = Task(*args, **kwargs)
         new_task.parent = self
         new_task.deadline = self.deadline
+        new_task.priority = self.priority
+        new_task.since = self.since
         self.subtasks.append(new_task)
         self.__recalc()
     
@@ -109,7 +131,6 @@ class Task:
         """
         target_task.subtasks.append(task_to_move)
         task_to_move.parent = target_task
-        target_task.__deadline_recalc()
         target_task.__recalc()
 
     def delete(self, task_name):
@@ -195,8 +216,16 @@ class Task:
         @private
         """
         for task in self.subtasks:
-            task.deadline = self.deadline
+            task._deadline = self.deadline
             task.__deadline_recalc()
+
+    def __since_recalc(self):
+        """! @brief Propagate since to subtasks
+        @private
+        """
+        for task in self.subtasks:
+            task._since = self.since
+            task.__since_recalc()
 
     def __recalc(self):
         """! @brief Trigger full recalculation from root
@@ -214,8 +243,10 @@ class Task:
             "name": self.name,
             "description": self.description,
             "deadline": self.deadline.isoformat(),
+            "since": self.since.isoformat(),
             "duration": self.duration,
             "completion": self.completion,
+            "priority": self.priority,
             "subtasks": [subtask.to_dict() for subtask in self.subtasks]
         }
 
@@ -248,6 +279,9 @@ class Task:
 
             ##construct the datetime object from iso format
             filtered_arguments["deadline"] = datetime.datetime.fromisoformat(filtered_arguments["deadline"])
+
+            ##construct the datetime object from iso format
+            filtered_arguments["since"] = datetime.datetime.fromisoformat(filtered_arguments["since"])
 
             new_task = Task(**filtered_arguments)
 

@@ -195,7 +195,7 @@ class CommandProcessor:
         scheduler.save_schedule()
 
     @staticmethod
-    def add_task(scheduler_name, name, deadline=None, description=None, duration=None):
+    def add_task(scheduler_name, name, deadline=None, description=None, duration=None, priority=None, since=None):
         """! @brief Add a new task to the TaskScheduler
         @param scheduler_name Identifier of the scheduler to add a task to
         @param name Unique identifier of the task
@@ -216,6 +216,9 @@ class CommandProcessor:
         if deadline == "MISSING":
             deadline = vim_extract()
 
+        if since == "MISSING":
+            since = vim_extract()
+
         if description == "MISSING":
             description = vim_extract()
 
@@ -225,8 +228,15 @@ class CommandProcessor:
         else:
             deadline = None if not deadline else datetime.datetime.fromisoformat(deadline)
 
-        ## construting the Task object
-        task = Task(name=name, description=description, duration=duration, deadline=deadline)
+        ## parsing since
+        if since and '+' in since:
+            since = parse_relative_date(since)
+        else:
+            since = None if not since else datetime.datetime.fromisoformat(since)
+
+
+        ## constructing the Task object
+        task = Task(name=name, description=description, duration=duration, deadline=deadline, priority=priority, since=since)
 
         scheduler.add_task(task)
 
@@ -309,7 +319,7 @@ class CommandProcessor:
         CommandProcessor.save_scheduler(scheduler)
 
     @staticmethod
-    def update_task(scheduler_name, task_name, name=None, description=None, duration=None, deadline=None, completion=None):
+    def update_task(scheduler_name, task_name, name=None, description=None, duration=None, deadline=None, completion=None, priority=None, since=None):
         """! @brief Update the details of an existing task
         @param scheduler_name Identifier of the scheduler to update task attributes
         @param task_name Unique identifier of the task to update
@@ -318,6 +328,7 @@ class CommandProcessor:
         @param duration New duration of the task
         @param deadline New deadline of the task in ISO-format
         @param completion New completion of the task in %
+        @param priority New priority of the task
         @details Performs rescheduling after the task is updated and launches Vim editor if name/description/duration is set to "MISSING"
         """
 
@@ -346,6 +357,9 @@ class CommandProcessor:
         if deadline == "MISSING":
             deadline = vim_edit("" if task.deadline is None else task.deadline.isoformat()).strip()
 
+        if since == "MISSING":
+            since = vim_edit("" if task.since is None else task.since.isoformat()).strip()
+
         if name != None:
 
             task.name = name
@@ -367,9 +381,22 @@ class CommandProcessor:
             else:
                 task.deadline = datetime.datetime.fromisoformat(deadline)
 
+        if since != None:
+
+            if '+' in since:
+                task.since = parse_relative_date(since)
+            elif since == '':
+                task.since = datetime.datetime.fromisoformat("0001-01-01T00:00:00")
+            else:
+                task.since = datetime.datetime.fromisoformat(since)
+
         if completion != None:
 
             task.completion = completion
+
+        if priority != None:
+
+            task.priority = priority
 
         print(f"Task '{task_name}' updated.")
 
@@ -561,9 +588,9 @@ COMMANDS = {
     "add_time_slot": lambda args: CommandProcessor.add_time_slot(args.scheduler_name, args.start_time, args.end_time),
     "delete_time_slot": lambda args: CommandProcessor.delete_time_slot(args.scheduler_name, args.start_time, args.end_time),
     "update_time_slots": lambda args: CommandProcessor.update_time_slots(args.scheduler_name),
-    "add_task": lambda args: CommandProcessor.add_task(args.scheduler_name, args.name, args.deadline, args.description, args.duration),
+    "add_task": lambda args: CommandProcessor.add_task(args.scheduler_name, args.name, args.deadline, args.description, args.duration, args.priority, args.since),
     "delete_task": lambda args: CommandProcessor.delete_task(args.scheduler_name, args.name),
-    "update_task": lambda args: CommandProcessor.update_task(args.scheduler_name, args.task_name, args.name, args.description, args.duration, args.deadline, args.completion),
+    "update_task": lambda args: CommandProcessor.update_task(args.scheduler_name, args.task_name, args.name, args.description, args.duration, args.deadline, args.completion, args.priority, args.since),
     "divide_task": lambda args: CommandProcessor.divide_task(args.scheduler_name, args.original_task_name, args.name, args.description, args.duration),
     "schedule_tasks": lambda args: CommandProcessor.schedule_tasks(args.scheduler_name, show_unscheduled=True, schedule_periodic=True),
     "view_next": lambda args: CommandProcessor.view_next_task(args.scheduler_name),
@@ -630,6 +657,8 @@ def parse_args():
     add_task_parser.add_argument('-desc', '--description', nargs='?', const='MISSING', help='Description of the task')
     add_task_parser.add_argument('-dur', '--duration', type=int, help='Duration of the task in minutes')
     add_task_parser.add_argument('-dl', '--deadline', type=str, nargs='?', const='MISSING', help='Deadline of the task in the iso format')
+    add_task_parser.add_argument('-p', '--priority', type=int, help='Priority of the task')
+    add_task_parser.add_argument('-s', '--since', nargs='?', const='MISSING', help='Time since the task can be scheduled')
 
     # Subcommand: divide_task
     divide_task_parser = subparsers.add_parser('divide_task', help='Subdividing the task')
@@ -654,6 +683,8 @@ def parse_args():
     update_task_parser.add_argument('-dl', '--deadline', nargs='?', const='MISSING', help='New deadline for the task')
     update_task_parser.add_argument('-dur', '--duration', nargs='?', type=int, help='New duration for the task in minutes')
     update_task_parser.add_argument('-c', '--completion', type=int, help='New completion for the task in percentage')
+    update_task_parser.add_argument('-p', '--priority', type=int, help='New priority for the task')
+    update_task_parser.add_argument('-s', '--since', nargs='?', const='MISSING', help='New time since the task can be scheduled')
 
     # Subcommand: delete_task
     delete_task_parser = subparsers.add_parser('delete_task', help='Delete a task from the TaskScheduler')
