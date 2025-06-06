@@ -38,7 +38,7 @@ class Task:
         self._duration = 0 if not duration else duration
         self._completion = 0  ##< Completion percentage (0-100)
         self.parent = parent  ##< Parent task reference
-        self.priority = priority
+        self.priority = 0 if not priority else priority
 
     @property
     def deadline(self):
