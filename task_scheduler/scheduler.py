@@ -157,15 +157,14 @@ class TaskScheduler:
 
                 ## calculating the remaining time for the current time slot
                 available_time = (min(time_slot.end_time, task.deadline) - max(datetime.datetime.now(),
-                                                                               time_slot.start_time)).total_seconds() / 60 - (
+                                                                               time_slot.start_time, task.since)).total_seconds() / 60 - (
                                      0 if time_slot not in self.scheduled_tasks else
                                      sum([t.duration for t in self.scheduled_tasks[time_slot]]))
 
                 task_root = task.get_root()
 
                 if ((task.duration <= available_time) and
-                        (task_root not in scheduling_result or scheduling_result[task_root] <= time_slot) and
-                        (task.since <= time_slot.start_time)):
+                        (task_root not in scheduling_result or scheduling_result[task_root] <= time_slot)):
 
                     self.scheduled_tasks[time_slot].append(task)
 

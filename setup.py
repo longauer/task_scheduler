@@ -7,7 +7,7 @@ def read_requirements():
 
 setup(
     name="task-scheduler-x",
-    version="3.0.2",
+    version="3.0.3",
     author="Samuel Longauer",
     author_email="samuel.longauer@gmail.com",
     description="A CLI-based Task Scheduling Application",
