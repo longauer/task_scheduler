@@ -132,6 +132,8 @@ class Task:
         target_task.subtasks.append(task_to_move)
         task_to_move.parent = target_task
         target_task.__recalc()
+        target_task_root = target_task.get_root()
+        target_task_root.__deadline_recalc()
 
     def delete(self, task_name):
         """! @brief Remove subtask by name
