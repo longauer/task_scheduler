@@ -307,7 +307,6 @@ class Task:
         @return True if same name and deadline
         """
         return isinstance(other, Task) and \
-               self.deadline == other.deadline and \
                self.name == other.name
 
     def __lt__(self, other):
