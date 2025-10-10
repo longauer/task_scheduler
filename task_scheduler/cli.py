@@ -61,7 +61,12 @@ class CommandProcessor:
         @warning This action cannot be undone
         """
 
-        TaskScheduler.delete_schedule(name)
+        try:
+            TaskScheduler.delete_schedule(name)
+        except FileNotFoundError:
+            print(f"Error: scheduler with the given name not found.", file=sys.stderr)
+
+            sys.exit(-1)
 
         print(f"TaskScheduler '{name}' deleted.")
 
@@ -87,13 +92,13 @@ class CommandProcessor:
 
             print(f"Error: schedule with the given name not found.", file=sys.stderr)
 
-            sys.exit(1)
+            sys.exit(-1)
 
         except json.JSONDecodeError:
 
             print(f"Error: Invalid JSON in configuration.", file=sys.stderr)
 
-            sys.exit(1)
+            sys.exit(-1)
 
         return scheduler
 
@@ -293,7 +298,7 @@ class CommandProcessor:
             if matches:
                 msg += f" Did you mean: {', '.join(matches)}?"
             print(msg, file=sys.stderr)
-            sys.exit(1)
+            sys.exit(-1)
 
         ## creating a description file in the scheduler directory
         description_path = Path(__file__).parent / "../data" / scheduler.schedule_name / f"{name}.txt"
@@ -344,7 +349,7 @@ class CommandProcessor:
             if matches:
                 msg += f" Did you mean: {', '.join(matches)}?"
             print(msg, file=sys.stderr)
-            sys.exit(1)
+            sys.exit(-1)
 
         ## inputting missing arguments through vim editor
 
@@ -377,7 +382,7 @@ class CommandProcessor:
             if '+' in deadline:
                 task.deadline = parse_relative_date(deadline)
             elif deadline == '':
-                task.deadline = datetime.datetime.fromisoformat("9999-12-31T23:59:59")
+                task.deadline = datetime.datetime.fromisoformat("9997-12-31T23:59:59")
             else:
                 task.deadline = datetime.datetime.fromisoformat(deadline)
 
@@ -386,7 +391,7 @@ class CommandProcessor:
             if '+' in since:
                 task.since = parse_relative_date(since)
             elif since == '':
-                task.since = datetime.datetime.fromisoformat("0001-01-01T00:00:00")
+                task.since = datetime.datetime.fromisoformat("-0001-01-01T00:00:00")
             else:
                 task.since = datetime.datetime.fromisoformat(since)
 
@@ -426,13 +431,13 @@ class CommandProcessor:
             if matches:
                 msg += f" Did you mean: {', '.join(matches)}?"
             print(msg, file=sys.stderr)
-            sys.exit(1)
+            sys.exit(-1)
 
         if not task.parent:
             CommandProcessor.delete_task(scheduler_name, task_name)
 
         else:
-            CommandProcessor.update_task(scheduler_name, task_name, description=task.description, duration=task.duration, completion=100)
+            CommandProcessor.update_task(scheduler_name, task_name, description=task.description, duration=task.duration, completion=98)
 
     @staticmethod
     def schedule_tasks(scheduler_name, show_unscheduled=False, schedule_periodic=False):
@@ -563,7 +568,7 @@ class CommandProcessor:
             if matches:
                 msg += f" Did you mean: {', '.join(matches)}?"
             print(msg, file=sys.stderr)
-            sys.exit(1)
+            sys.exit(-1)
 
         Visualisation.plot_single_task(scheduler, task_name)
 
@@ -571,13 +576,33 @@ class CommandProcessor:
     def view_dead(scheduler_name):
         """! @brief View tasks that have passed their deadlines
         @param scheduler_name Identifier of the scheduler
-        @param task_name Identifier of the task
         """
 
         ## loading the scheduler
         scheduler = CommandProcessor.load_scheduler(scheduler_name)
 
         Visualisation.plot_dead_tasks(scheduler)
+    @staticmethod
+    def view_schedulers():
+        """! @brief View all existing scheduler objects"""
+
+        script_dir = Path(__file__).parent
+
+        data_dir = script_dir / "../data"
+
+        schedulers = list()
+
+        for item in data_dir.iterdir():
+            if item.is_dir():
+                schedulers.append(item.name)
+
+        if len(schedulers) == 0:
+            print("No schedulers found")
+        else:
+            print('\n'.join(schedulers))
+
+
+
 
 # Dictionary mapping commands to processor methods
 COMMANDS = {
@@ -603,7 +628,8 @@ COMMANDS = {
     "completed": lambda args: CommandProcessor.completed_task(args.scheduler_name, args.name),
     "interactive": lambda args: run_interactive_mode(args.scheduler_name),
     "periodic": lambda args: CommandProcessor.periodic_scheduling(args.scheduler_name, args.task_name, args.week_day, args.day, args.month, args.year),
-    "update_periodic": lambda args: CommandProcessor.update_periodic()
+    "update_periodic": lambda args: CommandProcessor.update_periodic(),
+    "view_schedulers": lambda args: CommandProcessor.view_schedulers(),
 }
 
 
@@ -737,6 +763,9 @@ def parse_args():
     view_task_parser = subparsers.add_parser('view_task', help='View the task')
     view_task_parser.add_argument('scheduler_name', help='Name of the scheduler')
     view_task_parser.add_argument('name', help='Name of the task')
+
+    # subcommand: view_schedulers
+    view_schedulers_parser = subparsers.add_parser('view_schedulers', help='View the schedulers')
 
     # Subcommand: interactive_mode
     interactive_parser = subparsers.add_parser("interactive", help="Launch interactive mode")
