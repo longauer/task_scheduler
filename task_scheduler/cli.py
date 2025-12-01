@@ -590,6 +590,8 @@ class CommandProcessor:
 
         data_dir = script_dir / "../data"
 
+        data_dir.mkdir(exist_ok=True, parents=True)
+
         schedulers = list()
 
         for item in data_dir.iterdir():
