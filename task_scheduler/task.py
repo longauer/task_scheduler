@@ -38,7 +38,8 @@ class Task:
         self._duration = 0 if not duration else duration
         self._completion = 0  ##< Completion percentage (0-100)
         self.parent = parent  ##< Parent task reference
-        self.priority = 0 if not priority else priority
+        self._priority = 0 if not priority else priority
+    
 
     @property
     def deadline(self):
@@ -73,6 +74,23 @@ class Task:
 
         root = self.get_root()
         root.__since_recalc()
+
+    @property
+    def priority(self):
+        """! @brief Priority of a task
+        @note Setting propagates to all subtasks
+        """
+        return self._priority
+
+    @priority.setter
+    def priority(self, value):
+        """! @brief Set priority and propagate to subtasks
+        @param value New priority value for priority
+        """
+        self._priority = value
+
+        root = self.get_root()
+        root.__priority_recalc()
 
     @property
     def duration(self):
@@ -134,6 +152,7 @@ class Task:
         target_task.__recalc()
         target_task_root = target_task.get_root()
         target_task_root.__deadline_recalc()
+        target_task_root.__priority_recalc()
 
     def delete(self, task_name):
         """! @brief Remove subtask by name
@@ -157,6 +176,7 @@ class Task:
         @return Integer hash value
         """
         return hash(self.name)
+
 
     def __copy__(self):
         """! @brief Shallow copy implementation
@@ -220,6 +240,15 @@ class Task:
         for task in self.subtasks:
             task._deadline = self.deadline
             task.__deadline_recalc()
+
+    def __priority_recalc(self):
+        """! @brief Propagate priority to subtasks
+        @private
+        """
+        for task in self.subtasks:
+            task._priority = self.priority
+            task.__priority_recalc()
+
 
     def __since_recalc(self):
         """! @brief Propagate since to subtasks
