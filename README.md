@@ -302,7 +302,7 @@ docker build -t task-scheduler .
 
 - the application was so far tuned mainly for Unix-based operating systems (it works in windows as well but operations in the **interactive mode** are recommended to be carried out mainly by mouse clicks to avoid lag)
 
-- `pip` installs the source files in a directore separate from the one that stores the JSON datafiles after your first scheduler initialization. Consequently, upon reinstalling the package your data are not deleted from the file system on your machine. If you want to uninstall for good the data files have to be deleted manually - ``` pip -V ``` command can be used to find the path to the package installation. Then look for the data/ directory.
+- `pip` installs the source files in a directory separate from the one that stores the JSON datafiles after your first scheduler initialization. Consequently, upon reinstalling the package your data are not deleted from the file system on your machine. If you want to uninstall for good the data files have to be deleted manually - ``` pip -V ``` command can be used to find the path to the package installation. Then look for the data/ directory.
 
 
 
